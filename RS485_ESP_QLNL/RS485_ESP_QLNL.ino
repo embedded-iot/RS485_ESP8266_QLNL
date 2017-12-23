@@ -10,6 +10,7 @@
 unsigned char I1[8],I2[8],I3[8],U1[8],U2[8],U3[8],P1[8],P2[8],P3[8],totalenergy[11];
 unsigned char result[200], bufferRS[200]; 
 float realnum;
+byte sData[8];
 
 void setup() {
   // Open Serial port with:
@@ -19,10 +20,14 @@ void setup() {
   // Stop Bits: 1 bit
   //Serial.begin(9600, SERIAL_8N1);
   Serial.begin(9600);
-
+  delay(1000);
   GPIO();
-  
-  readMFM383();
+  show("");
+  delay(2000);
+  Convert4ByteToFloat(0x43, 0x70, 0x80, 0x00);
+  Convert4ByteToFloat(0x43, 0x66, 0x33, 0x34);
+  Convert4ByteToFloat(0x40, 0x33, 0xc3, 0x85);
+  //readMFM383();
 }
 
 void loop() {
@@ -47,7 +52,20 @@ void show(String str) {
     Serial.println(str); // Send to Serial
   #endif
 }
-byte sData[8];
+String convertArrayToString(byte arr[]) {
+  String strArray;
+  for (int i = 0; i< sizeof(arr); i++) {
+    strArray += (char)arr[i];
+  }
+  return strArray;
+}
+void printsData(){
+  for (int i = 0;i < 8; i++) {
+    //show((char)sData[i] + "");
+    show(String(sData[i],HEX));
+  }
+}
+
 void tx_485()
 {
   signed int  crcData;
@@ -61,13 +79,18 @@ void tx_485()
   crcData = CRC16(6);
   sData[6] = crcData & 0xff;
   sData[7] = crcData >> 8;
-  sendArrayToRS485(sData, 8);
+  show("Send serial:");
+  printsData();
+  show("Send RS48:");
+  sendArrayToRS485();
+//  String str = convertArrayToString(sData);
+  
 }
-void sendArrayToRS485(byte sdata[], int len) {
+void sendArrayToRS485() {
   digitalWrite(SS,TX);
   delay(50);
-  for (int i = 0; i< len; i++) {
-    RS485.print(sdata[i]);
+  for (int i = 0; i< 8; i++) {
+    RS485.print(sData[i]);
   }
   digitalWrite(SS,RX);
 }
@@ -216,10 +239,23 @@ void cov2real(void) {
 
 void readMFM383() {
   tx_485();
-  int len = rx_485(2000);
-  if(len > 0 && bufferRS[0]== 3 & bufferRS[1] == 4 & bufferRS[2] == 118)// neu cong to tra ve chinh xac 
-  {
-     cov2real();           
-  }
+//  int len = rx_485(2000);
+//
+//  if(len > 0 && bufferRS[0]== 3 & bufferRS[1] == 4 & bufferRS[2] == 118)// neu cong to tra ve chinh xac 
+//  {
+//     cov2real();           
+//  }
 }
+
+void Convert4ByteToFloat(byte HH, byte HL, byte LH, byte LL) {
+  unsigned long bits = (HH << 24) | (HL << 16) | (LH << 8) | LL;
+  int sign = ((bits >> 31) == 0) ? 1.0 : -1.0;
+  long e = ((bits >> 23) & 0xff);
+  long m = (e == 0) ? (bits & 0x7fffff) << 1 : (bits & 0x7fffff) | 0x800000;
+  float f = sign * m * pow(2, e - 150);
+  show(String(f));
+}
+
+
+
 
