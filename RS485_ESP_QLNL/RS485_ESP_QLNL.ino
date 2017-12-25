@@ -1,9 +1,13 @@
 // Config Serial : https://nvsl.github.io/PiDuino_Library/function/2000/02/02/Serial-begin-config.html
 
+#include <SoftwareSerial.h>
+
+SoftwareSerial RS485(13, 15);
+
 #define SS 12
 #define TX HIGH
 #define RX LOW 
-#define RS485 Serial
+//#define RS485 Serial2
 
 #define DEBUGGING
 
@@ -20,18 +24,23 @@ void setup() {
   // Stop Bits: 1 bit
   //Serial.begin(9600, SERIAL_8N1);
   Serial.begin(9600);
+  RS485.begin(9600);
   delay(1000);
   GPIO();
   show("");
   delay(2000);
-  Convert4ByteToFloat(0x43, 0x70, 0x80, 0x00);
-  Convert4ByteToFloat(0x43, 0x66, 0x33, 0x34);
-  Convert4ByteToFloat(0x40, 0x33, 0xc3, 0x85);
+  //Convert4ByteToFloat(0x43, 0x70, 0x80, 0x00);
+  //Convert4ByteToFloat(0x43, 0x66, 0x33, 0x34);
+  //Convert4ByteToFloat(0x40, 0x33, 0xc3, 0x85);
+  delay(2000);
   //readMFM383();
 }
 
 void loop() {
-  
+  //tx_485();
+  Test();
+  //RS485.println("23123213");
+  delay(5000);
 }
 
 void Send() {
@@ -48,10 +57,10 @@ void GPIO() {
 }
 void show(String str) {
   #ifdef DEBUGGING 
-    digitalWrite(SS,RX); // Disabled send RS485 
     Serial.println(str); // Send to Serial
   #endif
 }
+
 String convertArrayToString(byte arr[]) {
   String strArray;
   for (int i = 0; i< sizeof(arr); i++) {
@@ -61,38 +70,79 @@ String convertArrayToString(byte arr[]) {
 }
 void printsData(){
   for (int i = 0;i < 8; i++) {
-    //show((char)sData[i] + "");
-    show(String(sData[i],HEX));
+    show((char)sData[i] + "");
+    //Serial.print(String(sData[i],HEX));
   }
+}
+byte address = 0x4B;
+void Test() {
+  
+  sData[0] = 0x02; // SLAVE  address
+  sData[1] = 0x04; //ma ham
+  sData[2] = 0x00; //
+  sData[3] = address ; // 2 byte dia chi
+  sData[4] = 0x00; //
+  sData[5] =  2; // 2 byte so thanh ghi can doc het l� 0x3b
+//  sData[6] = 0x71;
+//  sData[7] = 0xCB;
+  tx_485();
 }
 
 void tx_485()
 {
   signed int  crcData;
-  sData[0] = 0x03; // SLAVE  address
-  sData[1] = 0x04; //ma ham
-  sData[2] = 0x00; //
-  sData[3] = 0x01; // 2 byte dia chi
-  sData[4] = 0x00; //
-  sData[5] = 0x3b; // 2 byte so thanh ghi can doc het l� 0x3b
-
+ 
   crcData = CRC16(6);
   sData[6] = crcData & 0xff;
   sData[7] = crcData >> 8;
-  show("Send serial:");
-  printsData();
+
+  //show("Send serial:");
+  //printsData();
   show("Send RS48:");
-  sendArrayToRS485();
+  sendArrayToRS485(8);
 //  String str = convertArrayToString(sData);
   
+  
+  int len = rx_485(3000);
+  show(String(len));
+  Convert4ByteToFloat(bufferRS[3], bufferRS[4],bufferRS[5],bufferRS[6]);
+  
 }
-void sendArrayToRS485() {
+int rx_485(long timeOut) {
+  RS485.flush();
+  long len = 0;
+  digitalWrite(SS,RX);
+  delay(10);
+  long t = 0;
+  while ( t++ <= 3000) {
+    if (RS485.available() > 0){
+       char c = RS485.read();
+       bufferRS[len++] = c;
+    }
+    //delayMicroseconds(1);
+    delay(1);
+  }
+  //while (t++ <= timeOut && !RS485.available());
+  //String s = 
+  for (int i = 0; i< len; i++) {
+    //show("== " + String(address + i));
+    show(String(bufferRS[i], HEX));
+  }
+  show("End RX");
+  return len; 
+}
+
+void sendArrayToRS485(int len) {
   digitalWrite(SS,TX);
   delay(50);
-  for (int i = 0; i< 8; i++) {
-    RS485.print(sData[i]);
+  //RS485.write(0x00);
+  for (int i = 0; i< len; i++) {
+    RS485.write(sData[i]);
+    delay(1); 
   }
+  delay(10);
   digitalWrite(SS,RX);
+  delay(10);
 }
 signed int CRC16( int iLeng)
 {
@@ -124,16 +174,7 @@ signed int CRC16( int iLeng)
   }
   return(CRCHi<<8 | CRCLo);
 }
-int rx_485(long timeOut) {
-  int len = 0;
-  digitalWrite(SS,RX);
-  while (timeOut-- > 0){
-    if (RS485.available() > 0){
-      bufferRS[len++] =  RS485.read();
-    }
-  }
-  return len; 
-}
+
 
 float twobyte2real(unsigned char byte1,unsigned char byte2) {
   unsigned char sign;

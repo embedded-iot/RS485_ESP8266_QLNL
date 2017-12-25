@@ -1,0 +1,282 @@
+
+<!-- saved from url=(0035)https://midas.psi.ch/mscb/hardware/ -->
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>MSCB Hardware</title>
+</head>
+
+<body>
+
+<center><h1>MSCB Hardware</h1></center>
+
+<table border="0" width="100%%">
+<tbody><tr><td valign="top">
+<a href="https://midas.psi.ch/mscb/hardware/#bus">RS-485 Bus</a><a><br>
+</a><a href="https://midas.psi.ch/mscb/hardware/#sm1">Submaster SCS-SM1</a><br>
+<a href="https://midas.psi.ch/mscb/hardware/#scs100">General purpose node SCS100</a><br>
+<a href="https://midas.psi.ch/mscb/hardware/#scs101">Mini piggy-back node SCS101</a><br>
+<a href="https://midas.psi.ch/mscb/hardware/#lcd1">LCD module SCS-LCD1</a><br>
+<a href="https://midas.psi.ch/mscb/hardware/#hv">High voltage node SCS-HV1</a><br>
+<a href="https://midas.psi.ch/mscb/hardware/#planned">Planned modules</a><br>
+
+<br><a href="https://midas.psi.ch/mscb/">Back</a><br>
+</td><td align="right">
+<a href="https://midas.psi.ch/mscb/hardware/scs.jpg"><img src="./MSCB Hardware_files/scs_mini.jpg"></a>
+</td></tr></tbody></table>
+
+<hr>
+
+Several prototypes modules have been developed at PSI. This page summarizes their features and
+contains the schematics and PCB layout necessary to build these modules. The supplied
+"software" in form of schematics and layouts is goverend by the <a href="http://www.gnu.org/copyleft/gpl.html">GNU public license</a>, which means that one can freely
+use and distribute the files, as long as they are kept under the GPL. The files were
+produced by the P-CAD system.<p>
+
+</p><hr><a name="bus"><h2>RS-485 Bus</h2>
+
+The MSCB system uses the RS-485 bus as a physical mediumin half duplex mode. This bus uses a ground line and two
+wires (A and B) which carry a differential signal to minimize the influence of noise. In the
+MSCB system, the bus also carries three power lines (for +5V, +12V and -12V supply) and four
+general purpose digital lines, which are application specific. The bus uses a 10-wire flat
+ribbon cable with crimp connectors. Following figure shows the pin assignment on the bus:<p>
+
+</p><center><table border="1">
+<tbody><tr><th>Pin1</th><th>Pin2</th><th>Pin3</th><th>Pin4</th><th>Pin5</th><th>Pin6</th><th>Pin7</th><th>Pin8</th><th>Pin9</th><th>Pin10</th></tr>
+<tr><td>Data A</td><td>Data B</td><td>-15V</td><td>+15V</td><td>+5V</td><td>GND</td><td>Reset</td><td>Interrupt</td><td>reserved</td><td>reserved</td></tr>
+<tr><td colspan="10" align="center"><img src="./MSCB Hardware_files/connector.gif"></td></tr>
+</tbody></table></center></a><p><a name="bus">
+
+The RS-485 bus is used in many industrial applications and other field buses. Some nice
+introduction can be found </a><a href="http://www.bb-europe.com/bb-euro/literature/485appnote.pdf">here</a> and <a href="http://www.engineerbob.com/rs485.pdf?10,17">here</a>.</p><p>
+
+Due to the differential signalling, it is relatively immune to noise when using twisted pair
+cables. Depending on the speed, the bus can easily be run at distances from 100m to a few km.
+If the bus becomes long (&gt; serveral hundred meters), a bus termination is required which
+matches the impedance of the twisted pair cable. The bus runs at a speed of 345600 Baud but
+can be slowed down if necessary. Unlike the RS-232 standard, the RS-485 is a multi-drop
+half-duplex bus, which means that many nodes can be connected to the same bus, but only one node at
+a time can send data. The RS-485 tranceivers in the SCS100 and SCS101 nodes present "1/8 load"
+to the bus, which means that 256 nodes can be directly connected to the same bus segment. If
+more nodes are needed, repeaters have to be used.</p><p>
+
+It should be noted that the MSCB bus only needs the A,B and GND wires to function, if the node
+power is supplied locally, and the interrupt and reset functionality is not necessary. In this
+case, simple two wire shielded twisted pair cable can be used. It is then recommended to use
+opto-couplers after the RS-485 transceivers to avoid ground loops.</p><p>
+
+In order to set the A and B line to a defined level in case no node is active, two pull up / pull
+down resistors are required. These resistors, together with a 100 Ohm termination resistor,
+are per definition implemented at that point where the power is applied to the bus, to avoid
+double termination as shown in the following figure:</p><p>
+
+</p><center><img src="./MSCB Hardware_files/term.gif"></center><p>
+
+When looking at the RS-485 line "A" (pin 1) with a scope, following bit pattern can be seen:</p><p>
+
+</p><center><img src="./MSCB Hardware_files/bits.gif"></center><p>
+
+After a negative start bit, we have 8 data bits with the LSB first, positive logic. The bit 9 is set
+only in addressing commands, followed by a positive stop bit. Line "B" is inverted.</p><p>
+
+</p><hr><a name="sm1"><h2>Submaster SCS-SM1</h2>
+
+In principle one could use a simple RS232-RS485 converter to talk to the MSCB bus from a PC. The problem
+lies in the usage of bit 9 of the RS232 protocol. It is not possible to switch this bit on and off fast
+enough in the UART of the PC. In addition, the 8051 microcontrollers support bit rates not in common
+with standard PC bit rates like 345600 baud. A further problem lies in the transmission of large data
+buffers. While modern UARTs have usually a 16 byte FIFO, one might still get a buffor overrun if large
+data buffers are received at high bit rates. To overcome this problems, the so-called "submaster" SM1
+has been developed. It connects to the parallel port of the PC and to the MSCB bus on the other side. It
+contains its own microcontroller which handles the handshake with the PC and features large enough
+buffers to avoid data loss. To decouple the MSCB bus from the PC ground, all bus signals use
+optocouplers.<p>
+
+In addition the SM1 module contains a power supply which can be used to power 10-20 nodes on the bus.
+Three unregulated voltages of +6V, +15V and -15V are supplied, so that small 78L05 type regulators
+can be used on the nodes to produce a clean +5V power supply.</p><p>
+
+A front panel button can be used to distribute an interrupt signal to all nodes on the bus, which
+can be used for example to switch of high voltages in an emergency case. Since this button is
+directly connected to a dedicated bus line, it works even if the microcontroller of the SM1 is
+malfunctioning.</p><p>
+
+<table border="0">
+<tbody><tr><td><a href="https://midas.psi.ch/mscb/hardware/scs-sm1.jpg"><img src="./MSCB Hardware_files/scs-sm1_thumb.jpg"></a>
+</td><td valign="top">
+<b>Power</b>: 220V or 110V<br>
+<b>Connection to PC</b>: Standard Sub-D 25 connector<br>
+<b>Internal microcontroller</b>: <a href="http://www.cygnal.com/datasheets/c8051f236_short.pdf">
+  Cygnal C8051F236</a> running at 11.0592MHz<br>
+<b>Power supply to bus</b>: +6V, 1.5A, unregulated; +15V, -15V, 0.2A, unregulated<br>
+<b>Bus connection</b>: decoupled via optocouplers<br>
+<b>Front panel elements</b>: 3 LED (power, activity, error), reset and interrupt button<br>
+<b>MSCB bus connectors</b>: 1 (front side) plus 2 (back side)<br>
+<b>Other connectors</b>: JTAG for programming the Cygnal microcontroller and interface to <a href="https://midas.psi.ch/mscb/hardware/#lcd1">SCS-LCD1 module</a><br>
+(very roughly) <b>estimated price of parts</b>: 50US$<br>
+
+<br>
+<a href="https://midas.psi.ch/mscb/hardware/scs-sm1.sch">Schematics</a>,
+<a href="https://midas.psi.ch/mscb/hardware/scs-sm1.pdf">as PDF file</a>,
+<a href="https://midas.psi.ch/mscb/hardware/scs-sm1.pcb">Layout</a>
+
+</td></tr><tr><td><a href="https://midas.psi.ch/mscb/hardware/scs-sm1_o1.jpg"><img src="./MSCB Hardware_files/scs-sm1_o1_thumb.jpg"></a>
+</td><td><a href="https://midas.psi.ch/mscb/hardware/scs-sm1_o2.jpg"><img src="./MSCB Hardware_files/scs-sm1_o2_thumb.jpg"></a></td></tr>
+
+</tbody></table>
+
+</p><hr></a><a name="scs100"><h2>General purpose node SCS100</h2>
+
+As a starting point, a general purpose node using the Analog Devices ADuC812 microcontroller has been
+designed. This node contains the RS485 bus receiver, +5V, +12V and -12V voltage regulators, a quartz,
+and LED, a temperature sensor (LM35) and an interface connector to the SCS-LCD1 module which can also be
+used to program the microcontroller. Since the microcontroller's ADC and DAC units have a range of
+0..2.5V, two quad operation amplifiers are contained on the node which can be programmed for any gain
+and offset in the range of -12V to +12V. In addition, the amplifiers can be configured as low pass
+filters for noisy input signals. A prototype area is supplied for futher extensions like relais or
+optocouplers.<p>
+
+<table border="0">
+<tbody><tr><td><a href="https://midas.psi.ch/mscb/hardware/scs100.jpg"><img src="./MSCB Hardware_files/scs100_thumb.jpg"></a>
+</td><td valign="top">
+<b>Size (without connector)</b>: (LWH) 96mm x 32mm x 13mm<br>
+<b>Power supply</b>: received from bus, regulated to +5V, +12V and -12V<br>
+<b>Microcontroller</b>: Analog Devices
+  <a href="http://products.analog.com/products/info.asp?product=ADuC812">ADuC812</a>
+  running at 11.0592MHz<br>
+<b>LED</b>: On when node is addressed<br>
+<b>Temperature sensors</b>: LM35, thermocouple inside the ADuC812<br>
+<b>Connectors</b>: 10-pin MSCB and 16-pin interface to <a href="https://midas.psi.ch/mscb/hardware/#lcd1">SCS-LCD1 module</a> and for ADuC812 programming<br>
+<b>Ports</b>: 8-bit TTL I/O (P2 of microcontroller), 8 channels ADC 12 bit, 200kHz, 2 channels DAC 12 bit<br>
+<b>OpAmps</b>: two quad op-amps (LM324 or OP400 for higher precision with offset and drifts in
+the microvolt region)<br>
+<b>Prototype area</b>:25mm x 30mm<br>
+<b>Price of parts and assembly</b>: ~25US$<br>
+
+<br>
+<a href="https://midas.psi.ch/mscb/hardware/scs100.sch">Schematics</a>,
+<a href="https://midas.psi.ch/mscb/hardware/scs100.pdf">as PDF file</a>,
+<a href="https://midas.psi.ch/mscb/hardware/scs100.pcb">Layout</a>
+
+</td></tr></tbody></table>
+
+</p><hr></a><a name="scs101"><h2>Mini piggy-back node SCS101</h2>
+
+The SCS101 node is similar to the SCS100 node, except that it misses the space for the
+operational amplifiers and the prototype grid. It is ment for piggy-back applications where
+the board can be plugged onto a larger board, or for applications where the DAC/ADC range of
+0..2.5V is sufficient.<p>
+
+<table border="0">
+<tbody><tr><td><a href="https://midas.psi.ch/mscb/hardware/scs101.jpg"><img src="./MSCB Hardware_files/scs101_thumb.jpg"></a>
+</td><td valign="top">
+<b>Size (without connector)</b>: (LWH) 40mm x 32mm x 13mm<br>
+<b>Power supply</b>: received from bus, regulated to +5V, +12V and -12V<br>
+<b>Microcontroller</b>: Analog Devices
+  <a href="http://products.analog.com/products/info.asp?product=ADuC812">ADuC812</a>
+  running at 11.0592MHz<br>
+<b>LED</b>: On when node is addressed<br>
+<b>Temperature sensors</b>: LM35, thermocouple inside the ADuC812<br>
+<b>Connectors</b>: 10-pin MSCB and 16-pin interface to <a href="https://midas.psi.ch/mscb/hardware/#lcd1">SCS-LCD1 module</a> and for ADuC812 programming<br>
+<b>Ports</b>: 5-bit TTL I/O (partial P2 of microcontroller), 8 channels ADC 12 bit, 200kHz, 2 channels DAC 12 bit
+<b>Price of parts and assembly</b>: ~23US$<br>
+
+<br>
+<a href="https://midas.psi.ch/mscb/hardware/scs100.sch">Schematics</a> (same as SCS100, second page),
+<a href="https://midas.psi.ch/mscb/hardware/scs100.pdf">as PDF file</a>,
+<a href="https://midas.psi.ch/mscb/hardware/scs101.pcb">Layout</a>
+
+</td></tr></tbody></table>
+
+
+</p><hr></a><a name="#lcd1"><h2>LCD module SCS-LCD1</h2>
+
+Both the SCS-SM1 and the SCS100/101 nodes feature a 16-pin connector, which carries 8 IO bits
+and power. The SCS-LCD1 module uses this port to connect a standard industrial LCD display
+plus some switches and buttons to the microcontroller on the nodes. In the standard software,
+the LCD display is used for debugging, but it can be freely used for application specific
+purposes.<p>
+
+<table border="0">
+<tbody><tr><td><a href="https://midas.psi.ch/mscb/hardware/scs-lcd1.jpg"><img src="./MSCB Hardware_files/scs-lcd1_thumb.jpg"></a>
+</td><td valign="top">
+<b>Size (without connector)</b>: (LWH) 145mm x 38mm x 23mm<br>
+<b>Power supply</b>: +5V received from connector<br>
+<b>LCD display</b>: <a href="http://www.dst-gmbh.de/avkat/av2020.pdf">Anag Vision AV2020</a>,
+  20x2 character, backlight or similar display with HD44780/KS0066 controller<br>
+<b>Switches</b>: 4, accessible by SCS100/SCS101/SCS-SM1 microcontroller<br>
+<b>Button</b>: 4, accessible by SCS100/SCS101/SCS-SM1 microcontroller<br>
+<b>Price of parts and assembly</b>: ~40 US$<br>
+
+<br>
+<a href="https://midas.psi.ch/mscb/hardware/scs-lcd1.sch">Schematics</a>,
+<a href="https://midas.psi.ch/mscb/hardware/scs-lcd1.pdf">as PDF file</a>
+
+</td></tr></tbody></table>
+
+</p><hr></a><a name="hv"><h2>High voltage node</h2>
+
+For several experiments at our institute, we need hundreds of cheap high voltate (0..2500V)
+channels to drive photomultipliers. Therefore a new system based on the MSCB has been
+developed. It uses special nodes with the ADuC812 microcontroller, a RS-485 tranceiver and
+optocouplers to regulate an external voltage down to zero. Therefore, all channels can use a
+single powerful high voltage source, and regulate the voltage down to the necessary value for
+the different photomultipliers. Using two quad optocouplers in series, each with collector-
+emmiter voltage of max. 200V, one can regulate voltages from 0..1600V. Using three quad
+optocouplers one reaches 0..2400V. Since each channel contains its own microcontroller with
+dedicated ADC and DAC channels, one can implement drift corrections and temperature
+compensations in software running on the microcontrollers. The channels are directly connected
+to the MSCB bus and can be controlled by the SCS-SM1 submaster.<p>
+
+A motherboard houses 12 channels and a 19" crate houses 16 boards, which makes 192 channels
+for a 19" crate. Each channel is connected to a LED on the fron panel for status display and
+to a HV connector at the back plane.</p><p>
+
+To compensate for temperature drifts in the DAC/ADC, a global high accuracy reference voltage
+is distributed through the crate, which is measured at every node. This allows a software
+correction for various drifts. In addition to that, the integrated temperature sensor of the
+microcontroller is used to compensate temperature drifts of some resistors.</p><p>
+
+The development of this system is still in progress so the quoted numbers are preliminary.</p><p>
+
+
+<table border="0">
+<tbody><tr><td><a href="https://midas.psi.ch/mscb/hardware/scs-hv1.jpg"><img src="./MSCB Hardware_files/scs-hv1_thumb.jpg"></a>
+</td><td valign="top">
+<b>Size</b>: 6U height motherboard housing 12 channels<br>
+<b>Power supply</b>: +5V, -5V from backplane and global HV 0..2400V<br>
+<b>Accuracy (target value)</b>: +-0.3V at 1000V between 20deg.C and 40deg.C absolute,
+reproducibility and stability &lt;0.1V<br>
+<b>Price per channel of a full crate</b>: 35 US$<br>
+
+<br>
+Positive HV:
+<a href="https://midas.psi.ch/mscb/hardware/p_hvr100.sch">Schematics</a>,
+<a href="https://midas.psi.ch/mscb/hardware/p_hvr100.pdf">as PDF file</a>,
+<a href="https://midas.psi.ch/mscb/hardware/p_hvr100.pcb">Layout</a>
+
+<br>
+Negative HV:
+<a href="https://midas.psi.ch/mscb/hardware/n_hvr100.sch">Schematics</a>,
+<a href="https://midas.psi.ch/mscb/hardware/n_hvr100.pdf">as PDF file</a>,
+<a href="https://midas.psi.ch/mscb/hardware/n_hvr100.pcb">Layout</a>
+
+</td></tr></tbody></table>
+
+</p><hr></a><a name="planned"><h2>Planned modules</h2>
+
+<h3>General purpose node with Cygnal C8051F000</h3>
+
+This node will be similar to the SCS100, but using the Cygnal microcontroller, which is
+better suited for application development due to its JTAG debug and download interface. This
+microcontroller can also be reprogrammed over the MSCB bus.<p>
+
+</p><h3>Submaster without power supply</h3>
+
+This will be a small submaster similar to the SCS-SM1, but without an integrated power supply.
+Instead, it will be powered directly from the bus. This module will be used together with the
+HV system, which produces its own power.<p>
+
+</p><hr>
+
+</a><address><a name="planned">Jaly 18th, 2001, </a><a href="http://midas.psi.ch/~stefan">S. Ritt</a></address>
+
+</body></html>
