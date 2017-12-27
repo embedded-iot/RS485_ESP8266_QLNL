@@ -1,9 +1,7 @@
 #include <ESP8266WiFi.h>
 #include <WiFiClient.h>
 #include <ESP8266WebServer.h>
-#include <WiFiServer.h>
 #include <EEPROM.h>
-#include <WiFiUdp.h>
 
 ESP8266WebServer server(80);
 
@@ -14,38 +12,42 @@ ESP8266WebServer server(80);
 
 #define ADDR 0
 #define ADDR_STASSID (ADDR)
-#define ADDR_STAPASS (ADDR_STASSID+20)
-#define ADDR_STAIP (ADDR_STAPASS+20)
-#define ADDR_STAGATEWAY (ADDR_STAIP+20)
-#define ADDR_STASUBNET (ADDR_STAGATEWAY+20)
-
-#define ADDR_APSSID (ADDR_STASUBNET+20)
+#define ADDR_STAPASS (ADDR+20)
+#define ADDR_APSSID (ADDR_STAPASS+20)
 #define ADDR_APPASS (ADDR_APSSID+20)
-#define ADDR_APIP (ADDR_APPASS+20)
-#define ADDR_APGATEWAY (ADDR_APIP+20)
-#define ADDR_APSUBNET (ADDR_APGATEWAY+20)
 
-#define ADDR_PORTTCP (ADDR_APSUBNET+20)
-#define ADDR_RFCONFIG (ADDR_PORTTCP+20)
+#define ADDR_USE_NAME (ADDR_APPASS+20)
+#define ADDR_CODE (ADDR_USE_NAME+20)
+#define ADDR_TIME_UPLOAD (ADDR_CODE+20)
+#define ADDR_SELECTED_BAUDRATE (ADDR_TIME_UPLOAD+20)
+#define ADDR_SELECTED_INVENTER (ADDR_SELECTED_BAUDRATE+20)
+#define ADDR_URL_UPLOAD (ADDR_SELECTED_INVENTER+20)
 
 
 
-#define ID_DEFAULT "12345678"
+
+#define ID_DEFAULT "1234567890"
 
 #define TIME_LIMIT_RESET 3000
 
 #define STA_SSID_DEFAULT "G"
 #define STA_PASS_DEFAULT "132654789"
-#define AP_SSID_DEFAULT "MBELL.VN"
+#define AP_SSID_DEFAULT "MBELL"
 #define AP_PASS_DEFAULT ID_DEFAULT
 
 #define USER_NAME_DEFAULT "TEST"
 #define CODE_DEFAULT "1234567890"
 #define URL_UPLOAD_DEFAULT "http://127.0.0.1/projects/PHP/test/updateData.php?"
+#define TIME_UPLOAD_DEFAULT 3000
 
+String UseName;
+String code;
+long timeUpload;
+String urlUpload;
 
 bool isLogin = false;
 bool isConnectAP = false;
+
 
 String staSSID, staPASS;
 String apSSID, apPASS;
@@ -53,6 +55,14 @@ long timeStation = 7000;
 int idWebSite = 0;
 
 bool flagClear = false;
+int countBaudrates = 9;
+long Baudrates[] = {2400, 4800, 9600, 14400, 19200, 28800, 38400, 57600,115200};
+long selectedBaudrate ;
+
+#define VIPS60 "VIPS 60"
+int countInventers = 1;
+String modelsInventer[] = {VIPS60};
+String selectedInventer ; 
 
 void DEBUG(String s);
 void GPIO();
@@ -82,18 +92,22 @@ void setup()
   EEPROM.begin(512);
   delay(1000);
   GPIO();
-    
+  //WiFi.mode(WIFI_AP_STA);
   if (EEPROM.read(500) != 255 || flagClear){
     ClearEEPROM();
     ConfigDefault();
     WriteConfig();
   }
   ReadConfig();
-  delay(1000);
-
-  WiFi.mode(WIFI_AP_STA);
   delay(2000);
-  ConnectWifi(timeStation); 
+  ConnectWifi(timeStation);
+  delay(1000);
+//  if (isConnectAP == false)
+//  {
+//    //WiFi.disconnect();
+//    WiFi.mode(WIFI_AP);
+//    show("Set WIFI_AP");
+//  }
   delay(1000);
   AccessPoint();
   delay(1000);
@@ -121,11 +135,12 @@ void loop()
     isLogin = false;
     t = millis();
   }
+  /*
   if (digitalRead(RESET) == LOW)
   {
     //ConfigDefault();
-    long t=TIME_LIMIT_RESET/100;
-    while (digitalRead(RESET)==LOW && t-- >= 0){
+    long t = TIME_LIMIT_RESET/100;
+    while (digitalRead(RESET) == LOW && t-- >= 0){
       delay(100);
     }
     if (t < 0){
@@ -134,7 +149,7 @@ void loop()
       WriteConfig();
       setup();
     }
-  }
+  }*/
   delay(50);
 }
 void show(String s)
@@ -193,6 +208,13 @@ void ConfigDefault()
   staPASS = STA_PASS_DEFAULT;
   apSSID = AP_SSID_DEFAULT;
   apPASS = AP_PASS_DEFAULT;
+  UseName = USER_NAME_DEFAULT;
+  code = CODE_DEFAULT;
+  urlUpload = URL_UPLOAD_DEFAULT;
+  timeUpload = TIME_UPLOAD_DEFAULT;
+  selectedBaudrate = Baudrates[0];
+  selectedInventer = modelsInventer[0];
+  
   //portTCP = PORT_TCP_DEFAULT;
 
   show("Config Default");
@@ -205,6 +227,14 @@ void WriteConfig()
   SaveStringToEEPROM(apPASS, ADDR_APPASS);
   //SaveStringToEEPROM(String(portTCP), ADDR_PORTTCP);
   
+  SaveStringToEEPROM(UseName, ADDR_USE_NAME);
+  SaveStringToEEPROM(code, ADDR_CODE);
+  SaveStringToEEPROM(urlUpload, ADDR_URL_UPLOAD);
+  SaveStringToEEPROM(String(timeUpload), ADDR_TIME_UPLOAD);
+  SaveStringToEEPROM(String(selectedBaudrate), ADDR_SELECTED_BAUDRATE);
+  SaveStringToEEPROM(selectedInventer, ADDR_SELECTED_INVENTER);
+  
+  
   show("Write Config");
 }
 void ReadConfig()
@@ -213,17 +243,40 @@ void ReadConfig()
   staPASS = ReadStringFromEEPROM(ADDR_STAPASS);
   apSSID = ReadStringFromEEPROM(ADDR_APSSID);
   apPASS = ReadStringFromEEPROM(ADDR_APPASS);
+
+  UseName = ReadStringFromEEPROM(ADDR_USE_NAME);
+  code = ReadStringFromEEPROM(ADDR_CODE);
+  timeUpload = atol(ReadStringFromEEPROM(ADDR_TIME_UPLOAD).c_str());
+  urlUpload = ReadStringFromEEPROM(ADDR_URL_UPLOAD);
+  selectedBaudrate = atol(ReadStringFromEEPROM(ADDR_SELECTED_BAUDRATE).c_str());
+  selectedInventer = ReadStringFromEEPROM(ADDR_SELECTED_INVENTER);
+
+  
   //portTCP = atol(ReadStringFromEEPROM(ADDR_PORTTCP).c_str());
   show("Read Config");
+  show(staSSID);
+  show(staPASS);
+  show(apSSID);
+  show(apPASS);
+  show(UseName);
+  show(code);
+  show(String(timeUpload));
+  show(urlUpload);
+  show(String(selectedBaudrate));
+  show(selectedInventer);
 }
 
 void AccessPoint()
 {
   show("Access Point Config");
+  show(apSSID);
+  show(apPASS);  
   //WiFi.disconnect();
   delay(1000);
   // Wait for connection
-  show( WiFi.softAP(apSSID.c_str(),apPASS.c_str()) ? "Ready" : "Failed!");
+  String strSoftAP = (WiFi.softAP(apSSID.c_str(), apPASS.c_str()) == true) ? "Ready" : "Failed!";
+  //String strSoftAP = (WiFi.softAP(ssid, password) == true) ? "Ready" : "Failed!";
+  show(strSoftAP);
   IPAddress myIP = WiFi.softAPIP();
   Serial.print("AP IP address: ");
   String SoftIP = ""+(String)myIP[0] + "." + (String)myIP[1] + "." +(String)myIP[2] + "." +(String)myIP[3];
@@ -301,7 +354,7 @@ String Title(){
     .head1 h1{margin: auto;}\
     table, th, td { border: 1px solid black;border-collapse: collapse;}\
     tr{ height: 40px;text-align: center;font-size: 20px;}\
-    input { height: 25px;text-align: center;}\
+    .input, input { height: 25px;text-align: center;min-width: 74%;}\
     button {height: 25px;width: 100px;margin: 5px;}\
     button:hover {background: #ccc; font-weight: bold; cursor: pointer;}\
     .subtitle {text-align: left;font-weight: bold;}\
@@ -375,11 +428,18 @@ String ContentConfig(){
         <div class=\"right\">: <input class=\"input\" placeholder=\"Mật khẩu wifi phát ra\" name=\"txtAPPass\" value=\""+apPASS+"\"></div>\
         <div class=\"subtitle\">Server Upload Data</div>\
         <div class=\"left\">User Name</div>\
-        <div class=\"right\">: <input class=\"input\" placeholder=\"Tên tài khoản\" name=\"txtUseName\" value=\""+USER_NAME_DEFAULT+"\" required></div>\
+        <div class=\"right\">: <input class=\"input\" placeholder=\"Tên tài khoản\" name=\"txtUseName\" value=\""+UseName+"\" required></div>\
         <div class=\"left\">Code</div>\
-        <div class=\"right\">: <input class=\"input\" placeholder=\"Mã thiết bị\" name=\"txtcode\" value=\""+CODE_DEFAULT+"\" required></div>\
+        <div class=\"right\">: <input class=\"input\" placeholder=\"Mã thiết bị\" name=\"txtcode\" value=\""+code+"\" required></div>\
         <div class=\"left\">URL Upload Data</div>\
-        <div class=\"right\">: <input class=\"input\" type=\"url\" placeholder=\"Mã thiết bị\" name=\"txtcode\" value=\""+URL_UPLOAD_DEFAULT+"\" required></div>\
+        <div class=\"right\">: <input class=\"input\" type=\"url\" placeholder=\"Link ắp dữ liệu\" name=\"txtUrlUpload\" value=\""+urlUpload+"\" required></div>\
+        <div class=\"left\">Time Upload</div>\
+        <div class=\"right\">: <input class=\"input\" type=\"number\" placeholder=\"Thời gian upload dữ liệu\" name=\"txtTimeUpload\" value=\""+ String(timeUpload) +"\" required></div>\
+        <div class=\"subtitle\">Configuration Inventer</div>\
+        <div class=\"left\">Name Inventer</div>\
+        <div class=\"right\">: " + dropdownInventers() + "</div>\
+        <div class=\"left\">Baudrate</div>\
+        <div class=\"right\">: " + dropdownBaudrates() + "</div>\
         <hr>\
         <div class=\"listBtn\">\
           <button type=\"submit\"><a href=\"?txtRefresh=true\">Refresh</a></button>\
@@ -394,6 +454,14 @@ String ContentConfig(){
   return content;
 }
 
+/*<div class=\"subtitle\">Configuration Inventer</div>\
+<div class=\"left\">Name Inventer</div>\
+<div class=\"right\">: " + dropdownInventers() + "</div>\
+<div class=\"left\">Baudrate</div>\
+<div class=\"right\">: " + dropdownBaudrates() + "</div>\
+<div class=\"left\">Time Upload</div>\
+<div class=\"right\">: <input class=\"input\" type=\"number\" placeholder=\"Thời gian upload dữ liệu\" name=\"txtTimeUpload\" value=\""+ String(timeUpload) +"\" required></div>\
+*/
 String webView(){
   String content = "<body>\
     <div class=\"head1\">\
@@ -426,6 +494,24 @@ String SendTRViewHome()
   return s;
 }
 
+String dropdownInventers() {
+  String s ="";
+  s += "<select class=\"input\" name=\"txtSelectedInventer\">";
+  for (int i = 0; i< countInventers; i++) {
+    s += "<option value=\"" + modelsInventer[i] + "\" " + ((selectedInventer == modelsInventer[i]) ? "selected" : "") + ">" + (modelsInventer[i]) + "</option>";
+  }
+  s += "</select>";
+  return s;
+}
+String dropdownBaudrates() {
+  String s ="";
+  s += "<select class=\"input\" name=\"txtSelectedBaudrate\">";
+  for (int i = 0; i< countBaudrates; i++) {
+    s += "<option value=\"" + String(Baudrates[i]) + "\" " + ((selectedBaudrate == Baudrates[i]) ? "selected": "") + ">" + (String(Baudrates[i])) + "</option>";
+  }
+  s += "</select>";
+  return s;
+}
 void GiaTriThamSo()
 {
   t = millis();
@@ -469,6 +555,42 @@ void GiaTriThamSo()
         if (Value != apPASS){
           apPASS =  Value ;
           show("Set apPASS : " + apPASS);
+        }
+      }
+      else if (Name.indexOf("txtUseName") >= 0){
+        if (Value != UseName){
+          UseName =  Value ;
+          show("Set UseName : " + UseName);
+        }
+      }
+      else if (Name.indexOf("txtcode") >= 0){
+        if (Value != code){
+          code =  Value ;
+          show("Set code : " + code);
+        }
+      }
+      else if (Name.indexOf("txtUrlUpload") >= 0){
+        if (Value != urlUpload){
+          urlUpload =  Value ;
+          show("Set urlUpload : " + urlUpload);
+        }
+      }
+      else if (Name.indexOf("txtTimeUpload") >= 0){
+        if (Value != String(timeUpload)){
+          timeUpload =  atol(Value.c_str());
+          show("Set timeUpload : " + String(timeUpload));
+        }
+      }
+      else if (Name.indexOf("txtSelectedInventer") >= 0){
+        if (Value != String(selectedInventer)){
+          selectedInventer = Value;
+          show("Set selectedInventer : " + selectedInventer);
+        }
+      }
+      else if (Name.indexOf("txtSelectedBaudrate") >= 0){
+        if (Value != String(selectedBaudrate)){
+          selectedBaudrate = atol(Value.c_str());
+          show("Set selectedBaudrate : " + String(selectedBaudrate));
         }
       }
       else if (Name.indexOf("txtRestart") >= 0){
@@ -526,6 +648,7 @@ void handleNotFound(){
   }
   server.send(404, "text/plain", message);
 }
+
 
 
 
