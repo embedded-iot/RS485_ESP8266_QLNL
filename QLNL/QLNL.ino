@@ -3,7 +3,20 @@
 #include <ESP8266WebServer.h>
 #include <EEPROM.h>
 
+//#include <SoftwareSerial.h>
+//#define TX_485 15
+//#define RX_485 13
+//SoftwareSerial RS485(RX_485, TX_485);
+
+#define ENABLE_RS485 false
+#define RS485 Serial
 ESP8266WebServer server(80);
+
+
+
+#define SS 12
+#define TX HIGH
+#define RX LOW 
 
 #define RESET 4 
 #define DEBUGGING
@@ -16,11 +29,21 @@ ESP8266WebServer server(80);
 #define ADDR_APSSID (ADDR_STAPASS+20)
 #define ADDR_APPASS (ADDR_APSSID+20)
 
-#define ADDR_USE_NAME (ADDR_APPASS+20)
+#define ADDR_ID_SLAVE (ADDR_APPASS+20)
+#define ADDR_DATA_SIZE (ADDR_ID_SLAVE+5)
+#define ADDR_PARITY (ADDR_DATA_SIZE+5)
+#define ADDR_STOP_BITS (ADDR_PARITY+5)
+
+#define ADDR_START_ADDRESS (ADDR_STOP_BITS+5)
+#define ADDR_TOTAL_REGISTER (ADDR_START_ADDRESS+5)
+
+#define ADDR_USE_NAME (ADDR_TOTAL_REGISTER+5)
 #define ADDR_CODE (ADDR_USE_NAME+20)
 #define ADDR_TIME_UPLOAD (ADDR_CODE+20)
 #define ADDR_SELECTED_BAUDRATE (ADDR_TIME_UPLOAD+20)
 #define ADDR_SELECTED_INVENTER (ADDR_SELECTED_BAUDRATE+20)
+
+
 #define ADDR_URL_UPLOAD (ADDR_SELECTED_INVENTER+20)
 
 
@@ -40,6 +63,15 @@ ESP8266WebServer server(80);
 #define URL_UPLOAD_DEFAULT "http://127.0.0.1/projects/PHP/test/updateData.php?"
 #define TIME_UPLOAD_DEFAULT 3000
 
+#define ID_SLAVE_DEFAULT 0x01
+#define BAUDRATE_DEFAULT 9600
+#define DATA_SIZE_DEFAULT 8
+#define PARITY_DEFAULT "Even"
+#define STOP_BITS_DEFAULT 1
+
+#define START_ADDRESS_DEFAULT 0x00
+#define TOTAL_REGISTER_DEFAULT 0x10
+
 String UseName;
 String code;
 long timeUpload;
@@ -54,15 +86,28 @@ String apSSID, apPASS;
 long timeStation = 7000;
 int idWebSite = 0;
 
-bool flagClear = false;
+bool flagClear = true;
 int countBaudrates = 9;
 long Baudrates[] = {2400, 4800, 9600, 14400, 19200, 28800, 38400, 57600,115200};
 long selectedBaudrate ;
+int DataSizes[4] = {5,6,7,8};
+int selectedDataSize;
+String Parities[3] = {"Odd","Even","None"};
+String selectedParity;
+int StopBits[4] = {1,2};
+int selectedStopBits;
+
+int startAddress;
+int totalRegister;
+
+int idSlave;
 
 #define VIPS60 "VIPS 60"
 int countInventers = 1;
 String modelsInventer[] = {VIPS60};
 String selectedInventer ; 
+
+
 
 void DEBUG(String s);
 void GPIO();
@@ -123,6 +168,8 @@ void setup()
     }
   }
   show("End Setup()");
+  if (ENABLE_RS485)
+    ConfigRS485();
   delay(2000);
 }
 
@@ -135,22 +182,22 @@ void loop()
     isLogin = false;
     t = millis();
   }
-  /*
+ 
   if (digitalRead(RESET) == LOW)
   {
     //ConfigDefault();
-    long t = TIME_LIMIT_RESET/100;
-    while (digitalRead(RESET) == LOW && t-- >= 0){
+    long t1 = TIME_LIMIT_RESET / 100;
+    while (digitalRead(RESET) == LOW && t1-- >= 0){
       delay(100);
     }
-    if (t < 0){
+    if (t1 < 0){
       show("RESET");
       ConfigDefault();
       WriteConfig();
       setup();
     }
-  }*/
-  delay(50);
+  }
+  delay(1);
 }
 void show(String s)
 {
@@ -201,6 +248,40 @@ String ReadStringFromEEPROM(int address)
   return s;
 }
 
+void ConfigRS485() {
+  String configSerial = "SERIAL_" + String(selectedDataSize) + selectedParity.charAt(0) + String(selectedStopBits); 
+  show("Config RS485");
+  show("Baudrate:");
+  show(String(selectedBaudrate));
+  show("Config:");
+  show(configSerial);
+  if (configSerial == "SERIAL_5N1") RS485.begin(selectedBaudrate, SERIAL_5N1);
+  else if (configSerial == "SERIAL_6N1") RS485.begin(selectedBaudrate, SERIAL_6N1); 
+  else if (configSerial == "SERIAL_7N1") RS485.begin(selectedBaudrate, SERIAL_7N1); 
+  else if (configSerial == "SERIAL_8N1") RS485.begin(selectedBaudrate, SERIAL_8N1); 
+  else if (configSerial == "SERIAL_5N2") RS485.begin(selectedBaudrate, SERIAL_5N2); 
+  else if (configSerial == "SERIAL_6N2") RS485.begin(selectedBaudrate, SERIAL_6N2); 
+  else if (configSerial == "SERIAL_7N2") RS485.begin(selectedBaudrate, SERIAL_7N2); 
+  else if (configSerial == "SERIAL_8N2") RS485.begin(selectedBaudrate, SERIAL_8N2); 
+  else if (configSerial == "SERIAL_5E1") RS485.begin(selectedBaudrate, SERIAL_5E1); 
+  else if (configSerial == "SERIAL_6E1") RS485.begin(selectedBaudrate, SERIAL_6E1); 
+  else if (configSerial == "SERIAL_7E1") RS485.begin(selectedBaudrate, SERIAL_7E1); 
+  else if (configSerial == "SERIAL_8E1") RS485.begin(selectedBaudrate, SERIAL_8E1); 
+  else if (configSerial == "SERIAL_5E2") RS485.begin(selectedBaudrate, SERIAL_5E2); 
+  else if (configSerial == "SERIAL_6E2") RS485.begin(selectedBaudrate, SERIAL_6E2); 
+  else if (configSerial == "SERIAL_7E2") RS485.begin(selectedBaudrate, SERIAL_7E2); 
+  else if (configSerial == "SERIAL_8E2") RS485.begin(selectedBaudrate, SERIAL_8E2); 
+  else if (configSerial == "SERIAL_5O1") RS485.begin(selectedBaudrate, SERIAL_5O1); 
+  else if (configSerial == "SERIAL_6O1") RS485.begin(selectedBaudrate, SERIAL_6O1); 
+  else if (configSerial == "SERIAL_7O1") RS485.begin(selectedBaudrate, SERIAL_7O1); 
+  else if (configSerial == "SERIAL_8O1") RS485.begin(selectedBaudrate, SERIAL_8O1); 
+  else if (configSerial == "SERIAL_5O2") RS485.begin(selectedBaudrate, SERIAL_5O2); 
+  else if (configSerial == "SERIAL_6O2") RS485.begin(selectedBaudrate, SERIAL_6O2); 
+  else if (configSerial == "SERIAL_7O2") RS485.begin(selectedBaudrate, SERIAL_7O2); 
+  else if (configSerial == "SERIAL_8O2") RS485.begin(selectedBaudrate, SERIAL_8O2); 
+  else RS485.begin(selectedBaudrate, SERIAL_8N1);
+}
+
 void ConfigDefault()
 {
   isLogin = false;
@@ -212,10 +293,16 @@ void ConfigDefault()
   code = CODE_DEFAULT;
   urlUpload = URL_UPLOAD_DEFAULT;
   timeUpload = TIME_UPLOAD_DEFAULT;
-  selectedBaudrate = Baudrates[0];
+  selectedBaudrate = BAUDRATE_DEFAULT;
   selectedInventer = modelsInventer[0];
-  
-  //portTCP = PORT_TCP_DEFAULT;
+
+  idSlave = ID_SLAVE_DEFAULT;
+  selectedDataSize = DATA_SIZE_DEFAULT;
+  selectedParity = PARITY_DEFAULT;
+  selectedStopBits = STOP_BITS_DEFAULT;
+
+  startAddress = START_ADDRESS_DEFAULT;
+  totalRegister = TOTAL_REGISTER_DEFAULT;
 
   show("Config Default");
 }
@@ -233,7 +320,15 @@ void WriteConfig()
   SaveStringToEEPROM(String(timeUpload), ADDR_TIME_UPLOAD);
   SaveStringToEEPROM(String(selectedBaudrate), ADDR_SELECTED_BAUDRATE);
   SaveStringToEEPROM(selectedInventer, ADDR_SELECTED_INVENTER);
-  
+
+  SaveStringToEEPROM(String(idSlave), ADDR_ID_SLAVE);
+  SaveStringToEEPROM(String(selectedDataSize), ADDR_DATA_SIZE);
+  SaveStringToEEPROM(selectedParity, ADDR_PARITY);
+  SaveStringToEEPROM(String(selectedStopBits), ADDR_STOP_BITS);
+
+
+  SaveStringToEEPROM(String(startAddress), ADDR_START_ADDRESS);
+  SaveStringToEEPROM(String(totalRegister), ADDR_TOTAL_REGISTER);
   
   show("Write Config");
 }
@@ -251,6 +346,13 @@ void ReadConfig()
   selectedBaudrate = atol(ReadStringFromEEPROM(ADDR_SELECTED_BAUDRATE).c_str());
   selectedInventer = ReadStringFromEEPROM(ADDR_SELECTED_INVENTER);
 
+  idSlave = atoi(ReadStringFromEEPROM(ADDR_ID_SLAVE).c_str());;
+  selectedDataSize = atoi(ReadStringFromEEPROM(ADDR_DATA_SIZE).c_str());;
+  selectedParity = ReadStringFromEEPROM(ADDR_PARITY);
+  selectedStopBits = atoi(ReadStringFromEEPROM(ADDR_STOP_BITS).c_str());;
+
+  startAddress = atoi(ReadStringFromEEPROM(ADDR_START_ADDRESS).c_str());;
+  totalRegister = atoi(ReadStringFromEEPROM(ADDR_TOTAL_REGISTER).c_str());;
   
   //portTCP = atol(ReadStringFromEEPROM(ADDR_PORTTCP).c_str());
   show("Read Config");
@@ -262,8 +364,14 @@ void ReadConfig()
   show(code);
   show(String(timeUpload));
   show(urlUpload);
-  show(String(selectedBaudrate));
   show(selectedInventer);
+  show(String(selectedBaudrate));
+  show(String(idSlave));
+  show(String(selectedDataSize));
+  show(selectedParity);
+  show(String(selectedStopBits));
+  show(String(startAddress,HEX));
+  show(String(totalRegister,HEX));
 }
 
 void AccessPoint()
@@ -440,6 +548,18 @@ String ContentConfig(){
         <div class=\"right\">: " + dropdownInventers() + "</div>\
         <div class=\"left\">Baudrate</div>\
         <div class=\"right\">: " + dropdownBaudrates() + "</div>\
+        <div class=\"left\">Id Slave</div>\
+        <div class=\"right\">: <input class=\"input\" type=\"number\" placeholder=\"Địa chỉ Inventer\" name=\"txtIdSlave\" value=\""+ String(idSlave) +"\" required></div>\
+        <div class=\"left\">Data Size</div>\
+        <div class=\"right\">: " + dropdownDataSizes() + "</div>\
+        <div class=\"left\">Parity</div>\
+        <div class=\"right\">: " + dropdownParities() + "</div>\
+        <div class=\"left\">Stop Bits</div>\
+        <div class=\"right\">: " + dropdownStopBits() + "</div>\
+        <div class=\"left\">Start Address (HEX)</div>\
+        <div class=\"right\">: <input class=\"input\" type=\"number\" placeholder=\"Địa chỉ thanh ghi bắt đầu\" name=\"txtStartAddress\"  min=\"0\" value=\""+ String(startAddress, HEX) +"\" required></div>\
+        <div class=\"left\">Total Register (HEX)</div>\
+        <div class=\"right\">: <input class=\"input\" type=\"number\" placeholder=\"Số thanh ghi cần đọc\" name=\"txtTotalRegister\" min=\"1\" value=\""+ String(totalRegister, HEX) +"\" required></div>\
         <hr>\
         <div class=\"listBtn\">\
           <button type=\"submit\"><a href=\"?txtRefresh=true\">Refresh</a></button>\
@@ -508,6 +628,33 @@ String dropdownBaudrates() {
   s += "<select class=\"input\" name=\"txtSelectedBaudrate\">";
   for (int i = 0; i< countBaudrates; i++) {
     s += "<option value=\"" + String(Baudrates[i]) + "\" " + ((selectedBaudrate == Baudrates[i]) ? "selected": "") + ">" + (String(Baudrates[i])) + "</option>";
+  }
+  s += "</select>";
+  return s;
+}
+String dropdownDataSizes() {
+  String s ="";
+  s += "<select class=\"input\" name=\"txtSelectedDataSize\">";
+  for (int i = 0; i< 4; i++) {
+    s += "<option value=\"" + String(DataSizes[i]) + "\" " + ((selectedDataSize == DataSizes[i]) ? "selected": "") + ">" + (String(DataSizes[i])) + "</option>";
+  }
+  s += "</select>";
+  return s;
+}
+String dropdownParities() {
+  String s ="";
+  s += "<select class=\"input\" name=\"txtSelectedParity\">";
+  for (int i = 0; i< 3; i++) {
+    s += "<option value=\"" + Parities[i] + "\" " + ((selectedParity == Parities[i]) ? "selected" : "") + ">" + (Parities[i]) + "</option>";
+  }
+  s += "</select>";
+  return s;
+}
+String dropdownStopBits() {
+  String s ="";
+  s += "<select class=\"input\" name=\"txtSelectedStopBits\">";
+  for (int i = 0; i< 2; i++) {
+    s += "<option value=\"" + String(StopBits[i]) + "\" " + ((selectedStopBits == StopBits[i]) ? "selected": "") + ">" + (String(StopBits[i])) + "</option>";
   }
   s += "</select>";
   return s;
@@ -593,6 +740,31 @@ void GiaTriThamSo()
           show("Set selectedBaudrate : " + String(selectedBaudrate));
         }
       }
+      else if (Name.indexOf("txtSelectedDataSize") >= 0){
+        if (Value != String(selectedDataSize)){
+          selectedDataSize =  atoi(Value.c_str());
+          show("Set selectedDataSize : " + String(selectedDataSize));
+        }
+      }
+      else if (Name.indexOf("txtSelectedParity") >= 0){
+        if (Value != selectedParity){
+          selectedParity =  Value;
+          show("Set selectedParity : " + selectedParity);
+        }
+      }
+      else if (Name.indexOf("txtSelectedStopBits") >= 0){
+        if (Value != String(selectedStopBits)){
+          selectedStopBits =  atoi(Value.c_str());
+          show("Set selectedStopBits : " + String(selectedStopBits));
+        }
+      }
+//      else if (Name.indexOf("txtSelectedStopBits") >= 0){
+//        if (Value != String(selectedStopBits)){
+//          selectedStopBits =  atoi(Value.c_str());
+//          show("Set selectedStopBits : " + String(selectedStopBits));
+//        }
+//      }
+//      txtStartAddress
       else if (Name.indexOf("txtRestart") >= 0){
         idWebSite = 2;
         show("Verify restart");
