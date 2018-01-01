@@ -1,6 +1,7 @@
 #include <ESP8266WiFi.h>
 #include <WiFiClient.h>
 #include <ESP8266WebServer.h>
+#include <ESP8266HTTPClient.h>
 #include <EEPROM.h>
 
 //#include <SoftwareSerial.h>
@@ -8,15 +9,13 @@
 //#define RX_485 13
 //SoftwareSerial RS485(RX_485, TX_485);
 
-#define ENABLE_RS485 false
-#define RS485 Serial
-ESP8266WebServer server(80);
-
-
-
+#define ENABLE_RS485 true
 #define SS 12
 #define TX HIGH
 #define RX LOW 
+#define RS485 Serial
+
+ESP8266WebServer server(80);
 
 #define RESET 4 
 #define DEBUGGING
@@ -61,15 +60,15 @@ ESP8266WebServer server(80);
 #define USER_NAME_DEFAULT "TEST"
 #define CODE_DEFAULT "1234567890"
 #define URL_UPLOAD_DEFAULT "http://127.0.0.1/projects/PHP/test/updateData.php?"
-#define TIME_UPLOAD_DEFAULT 3000
+#define TIME_UPLOAD_DEFAULT 8000
 
-#define ID_SLAVE_DEFAULT 0x01
+#define ID_SLAVE_DEFAULT 0x02
 #define BAUDRATE_DEFAULT 9600
 #define DATA_SIZE_DEFAULT 8
-#define PARITY_DEFAULT "Even"
+#define PARITY_DEFAULT "None"
 #define STOP_BITS_DEFAULT 1
 
-#define START_ADDRESS_DEFAULT 0x00
+#define START_ADDRESS_DEFAULT 0x4B
 #define TOTAL_REGISTER_DEFAULT 0x10
 
 String UseName;
@@ -86,7 +85,7 @@ String apSSID, apPASS;
 long timeStation = 7000;
 int idWebSite = 0;
 
-bool flagClear = true;
+bool flagClear = false;
 int countBaudrates = 9;
 long Baudrates[] = {2400, 4800, 9600, 14400, 19200, 28800, 38400, 57600,115200};
 long selectedBaudrate ;
@@ -108,6 +107,11 @@ String modelsInventer[] = {VIPS60};
 String selectedInventer ; 
 
 
+unsigned char I1[8],I2[8],I3[8],U1[8],U2[8],U3[8],P1[8],P2[8],P3[8],totalenergy[11];
+unsigned char bufferRS[150]; 
+int lenRX485;
+float realnum;
+byte sData[8];
 
 void DEBUG(String s);
 void GPIO();
@@ -127,9 +131,15 @@ void GiaTriThamSo();
 
 
 long t ;
+long timeLogout = 30000;
+long timeUp;
+long t1;
+long timeReconnectAccessPoint = 120*1000; //60 giay
+bool flagReconnectAccesspoint = false;
+
 void setup()
 {
-  Serial.begin(115200);
+  Serial.begin(9600);
   delay(1000);
   idWebSite = 0;
   isLogin = false;
@@ -160,21 +170,17 @@ void setup()
   digitalWrite(LED,HIGH);
   delay(1000);
   // Notify: Connect AP success. 
-  if (isConnectAP == false){
-    int i=0;
-    while (i++ < 3) {
-      digitalWrite(LED,LOW);delay(500);
-      digitalWrite(LED,HIGH);delay(500);
-    }
-  }
+  blinkLed();
+  delay(1000);
+  timeUp = millis();
+  t1 = timeUp;
+  requestDataInventer();
   show("End Setup()");
-  if (ENABLE_RS485)
+  if (ENABLE_RS485) 
     ConfigRS485();
-  delay(2000);
 }
 
-WiFiClient client ;
-long timeLogout = 30000;
+bool flagReponse;
 void loop()
 {
   server.handleClient();
@@ -182,7 +188,32 @@ void loop()
     isLogin = false;
     t = millis();
   }
- 
+  // reconnect access point, if isConnectAP = false
+  if (flagReconnectAccesspoint && isConnectAP && (millis() - t1 > timeReconnectAccessPoint)) {
+    ConnectWifi(timeStation);
+    blinkLed();
+    t1 = millis();
+  }
+   
+  // 
+  if (ENABLE_RS485 && (millis() - timeUp > timeUpload)) {
+    sendRequestToRS485();
+    flagReponse = true;
+    timeUp = millis();
+  }
+
+  if (flagReponse && RS485.available() > 0) {
+    int len = readReponseRX485();
+    lenRX485 = len;
+    show(String(len));
+    if (verifyReponseRS485(len)) {
+       Convert4ByteToFloat(bufferRS[3], bufferRS[4],bufferRS[5],bufferRS[6]);
+    }else  {
+      show("Reponse RX Error!");
+    }
+    flagReponse = false;
+  }
+  
   if (digitalRead(RESET) == LOW)
   {
     //ConfigDefault();
@@ -199,11 +230,26 @@ void loop()
   }
   delay(1);
 }
-void show(String s)
+int StringHexToInt(String strHex) {
+  return strtol( &strHex[0], 0, 16);
+}
+void show(String str)
 {
   #ifdef DEBUGGING 
-    Serial.println(s);
+    digitalWrite(SS,RX);
+    delay(10);
+    Serial.println(str); // Send to Serial
+    delay(10);
   #endif
+}
+void blinkLed() {
+  if (isConnectAP == false){
+    int i=0;
+    while (i++ < 3) {
+      digitalWrite(LED,LOW);delay(500);
+      digitalWrite(LED,HIGH);delay(500);
+    }
+  }
 }
 void GPIO()
 {
@@ -211,6 +257,7 @@ void GPIO()
   pinMode(LED,OUTPUT);
   pinMode(RESET,INPUT_PULLUP);
   digitalWrite(LED,LOW);
+  pinMode(SS, OUTPUT);
 }
 void ClearEEPROM()
 {
@@ -281,7 +328,113 @@ void ConfigRS485() {
   else if (configSerial == "SERIAL_8O2") RS485.begin(selectedBaudrate, SERIAL_8O2); 
   else RS485.begin(selectedBaudrate, SERIAL_8N1);
 }
+void printsData(){
+  show("Show printsData:");
+  for (int i = 0;i < 8; i++) {
+    show(String(sData[i],HEX));
+  }
+}
+byte address = 0x4B;
+void requestDataInventer() {
+  show("request Data Inventer:");
+  signed int  crcData;
+  sData[0] = idSlave; // SLAVE  address
+  sData[1] = 0x04; //ma ham
+  sData[2] = startAddress >> 8; //
+  sData[3] = startAddress & 0xff ; // 2 byte dia chi
+  sData[4] = totalRegister >> 8; //
+  sData[5] =  totalRegister & 0xff; // 2 byte so thanh ghi can doc het l� 0x3b
+//  sData[6] = 0x71;
+//  sData[7] = 0xCB;
+  crcData = CRC16(sData, 6);
+  sData[6] = crcData & 0xff;
+  sData[7] = crcData >> 8;
+  printsData();
+}
+bool verifyReponseRS485(int len) {
+  signed int  crcData; 
+  crcData = CRC16(bufferRS, len - 2);
+  int crcL = crcData & 0xff;
+  int crcH = crcData >> 8;
+  if (bufferRS[0] != sData[0] 
+    || bufferRS[1] != sData[1] 
+    || bufferRS[2] != sData[2]
+    || bufferRS[len-2] != crcL
+    || bufferRS[len-1] != crcH) {
+    return true;
+  }
+  return false;
+}
+void sendRequestToRS485() {
+  digitalWrite(SS,TX);
+  delay(10);
+  for (int i = 0; i< 8; i++) {
+    RS485.write(sData[i]);
+    delay(1); 
+  }
+  delay(10);
+  digitalWrite(SS,RX);
+  delay(10);
+}
+int rx_4851(long timeOutReponse) {
+  long t = 0;
+  int len = 0;
+  digitalWrite(SS,RX);
+  delay(10);
+  while ( t++ <= timeOutReponse && !RS485.available()) {delay(1);}
+  String reponse = RS485.readString();
+  len = reponse.length();
+  for (int i = 0; i < len; i++) {
+    bufferRS[i] = (char)reponse.charAt(i);
+  }
+  return len; 
+}
+int readReponseRX485() {
+  String reponse = RS485.readString();
+  int len = reponse.length();
+  for (int i = 0; i < len; i++) {
+    bufferRS[i] = (char)reponse.charAt(i);
+  }
+  return len;
+}
+signed int CRC16(byte arrayData[] ,int iLeng)
+{
+  signed int CRCLo,CRCHi;
+  signed int CL,CH;
+  signed int SHi,SLo;
+  int i,Flag;
 
+  CRCLo = 0xff;
+  CRCHi = 0xff;
+  CL = 0x01; CH = 0xa0;
+  for(i=0; i<iLeng; i++)
+  {  
+    CRCLo = CRCLo ^ arrayData[i];
+    for( Flag=0; Flag<=7; Flag++)
+    {
+      SHi = CRCHi;
+      SLo = CRCLo;
+      CRCHi = CRCHi>>1;
+      CRCLo = CRCLo>>1;
+      if((SHi&0x01) == 0x01)
+        CRCLo = CRCLo|0x80;
+      if((SLo&0x01) == 0x01)
+      {
+        CRCHi = CRCHi ^ CH;
+        CRCLo = CRCLo ^ CL;
+      } 
+    }
+  }
+  return(CRCHi<<8 | CRCLo);
+}
+void Convert4ByteToFloat(byte HH, byte HL, byte LH, byte LL) {
+  unsigned long bits = (HH << 24) | (HL << 16) | (LH << 8) | LL;
+  int sign = ((bits >> 31) == 0) ? 1.0 : -1.0;
+  long e = ((bits >> 23) & 0xff);
+  long m = (e == 0) ? (bits & 0x7fffff) << 1 : (bits & 0x7fffff) | 0x800000;
+  float f = sign * m * pow(2, e - 150);
+  show(String(f));
+}
 void ConfigDefault()
 {
   isLogin = false;
@@ -373,7 +526,6 @@ void ReadConfig()
   show(String(startAddress,HEX));
   show(String(totalRegister,HEX));
 }
-
 void AccessPoint()
 {
   show("Access Point Config");
@@ -416,6 +568,29 @@ void ConnectWifi(long timeOut)
   }else {
     isConnectAP = false;
     show("Disconnect");
+  }
+}
+
+/*
+ * Function HTTP_REQUEST_GET
+ * Parameter : +request : Request GET from ESP To Website (or Address Website)
+ * Example : request= https://www.google.com.vn/?gfe_rd=cr&ei=yBDmWPrYHubc8ge42aawBA&gws_rd=ssl#q=ESP8266&*
+ * Return: Page content.
+ */
+void HTTP_REQUEST(String request, String Url)
+{
+  if(WiFi.status()== WL_CONNECTED)
+  {  
+    HTTPClient http;  //Declare an object of class HTTPClient
+    String strRequestHTTP = Url + request;
+    show(strRequestHTTP);
+    http.begin(strRequestHTTP);//Specify request destination
+    int httpCode= http.GET();//Send the request
+    if(httpCode > 0){    //Check the returning code
+      String payload = http.getString();   //Get the request response payload
+      show(payload);                     //Print the response payload
+    }
+    http.end();   //Close connection
   }
 }
 
@@ -516,6 +691,9 @@ String ContentLogin(){
   return content;
 }
 String ContentConfig(){
+  String strStartAddress = String(startAddress, HEX);
+  show(strStartAddress);
+  String strTotalRegister = String(totalRegister, HEX);
   String content = "<body>\
     <div class=\"head1\">\
       <h1>Setting config</h1>\
@@ -557,9 +735,9 @@ String ContentConfig(){
         <div class=\"left\">Stop Bits</div>\
         <div class=\"right\">: " + dropdownStopBits() + "</div>\
         <div class=\"left\">Start Address (HEX)</div>\
-        <div class=\"right\">: <input class=\"input\" type=\"number\" placeholder=\"Địa chỉ thanh ghi bắt đầu\" name=\"txtStartAddress\"  min=\"0\" value=\""+ String(startAddress, HEX) +"\" required></div>\
+        <div class=\"right\">: <input class=\"input\" placeholder=\"Địa chỉ bắt đầu\" name=\"txtStartAddress\" value=\""+ String(startAddress,HEX) +"\" required></div>\
         <div class=\"left\">Total Register (HEX)</div>\
-        <div class=\"right\">: <input class=\"input\" type=\"number\" placeholder=\"Số thanh ghi cần đọc\" name=\"txtTotalRegister\" min=\"1\" value=\""+ String(totalRegister, HEX) +"\" required></div>\
+        <div class=\"right\">: <input class=\"input\" placeholder=\"Số thanh ghi cần đọc\" name=\"txtTotalRegister\" value=\""+ String(totalRegister ,HEX)+"\" required></div>\
         <hr>\
         <div class=\"listBtn\">\
           <button type=\"submit\"><a href=\"?txtRefresh=true\">Refresh</a></button>\
@@ -600,13 +778,33 @@ String webView(){
     <script type=\"text/javascript\">\
       setInterval(function() {\
       window.location.reload();\
-      }, 2000);\
+      }, " + String(timeStation) + ");\
     </script>\
     </div>\
   </body>\
   </html>";
   return content;
 }
+String RegisterMaps(){
+  GiaTriThamSo();
+  String content = "<body>\
+    <div class=\"head1\">\
+    <h1>Register Maps</h1>\
+    </div>\
+    <div class=\"content\">\
+      <table><tr class=\"row\"><th>Address</th><th>Hex Address</th></tr>"+ SendTRRegisterMaps() +"</table>\
+    </div>\
+  </body>\
+  </html>";
+  return content;
+}
+String SendTRRegisterMaps()
+{
+  String s="";
+  for (int i = 0; i< lenRX485; i++) {
+    s += "<tr class=\"row" + isTrActive(i) + "\"><td class=\"column\">"+ id + "-" + getAddress(bufferRF[i]) +"</td><td class=\"column\">"+ getData(bufferRF[i]) +"</td></tr>";
+  return s;
+} 
 String SendTRViewHome()
 {
   String s="";
@@ -758,13 +956,19 @@ void GiaTriThamSo()
           show("Set selectedStopBits : " + String(selectedStopBits));
         }
       }
-//      else if (Name.indexOf("txtSelectedStopBits") >= 0){
-//        if (Value != String(selectedStopBits)){
-//          selectedStopBits =  atoi(Value.c_str());
-//          show("Set selectedStopBits : " + String(selectedStopBits));
-//        }
-//      }
-//      txtStartAddress
+      else if (Name.indexOf("txtStartAddress") >= 0){
+        if (Value != String(startAddress,HEX)){
+          startAddress =  StringHexToInt(Value.c_str());
+          show("Set startAddress : " + String(startAddress,HEX));
+        }
+      }
+      else if (Name.indexOf("txtTotalRegister") >= 0){
+        if (Value != String(totalRegister,HEX)){
+          totalRegister =  StringHexToInt(Value.c_str());
+          show("Set totalRegister : " + String(totalRegister,HEX));
+        }
+      }
+
       else if (Name.indexOf("txtRestart") >= 0){
         idWebSite = 2;
         show("Verify restart");
@@ -820,7 +1024,6 @@ void handleNotFound(){
   }
   server.send(404, "text/plain", message);
 }
-
 
 
 
