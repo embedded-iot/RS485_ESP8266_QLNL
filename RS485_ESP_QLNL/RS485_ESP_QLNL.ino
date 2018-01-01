@@ -2,15 +2,14 @@
 
 #include <SoftwareSerial.h>
 
-SoftwareSerial RS485(13, 15);
+//SoftwareSerial RS485(13, 15);
 
 #define SS 12
 #define TX HIGH
 #define RX LOW 
-//#define RS485 Serial2
+#define RS485 Serial
 
 #define DEBUGGING
-
 unsigned char I1[8],I2[8],I3[8],U1[8],U2[8],U3[8],P1[8],P2[8],P3[8],totalenergy[11];
 unsigned char result[200], bufferRS[200]; 
 float realnum;
@@ -24,10 +23,10 @@ void setup() {
   // Stop Bits: 1 bit
   //Serial.begin(9600, SERIAL_8N1);
   Serial.begin(9600);
-  RS485.begin(9600);
+  //RS485.begin(9600);
   delay(1000);
   GPIO();
-  show("");
+  show("Khoi dong xong");
   delay(2000);
   //Convert4ByteToFloat(0x43, 0x70, 0x80, 0x00);
   //Convert4ByteToFloat(0x43, 0x66, 0x33, 0x34);
@@ -35,29 +34,27 @@ void setup() {
   delay(2000);
   //readMFM383();
 }
-
+long t = 0;
 void loop() {
   //tx_485();
-  Test();
-  //RS485.println("23123213");
-  delay(5000);
+  if (millis() - t > 2000) {
+    Test();
+    t = millis();
+  }
+  delay(1);
 }
 
-void Send() {
-  int d = 0;
-  digitalWrite(SS,TX);
-  delay(50);
-  Serial.println(String(d++));
-  delay(50);
-  digitalWrite(SS,RX);
-  delay(1000);
-}
 void GPIO() {
   pinMode(SS, OUTPUT);
 }
 void show(String str) {
   #ifdef DEBUGGING 
+    digitalWrite(SS,RX);
+    delay(10);
     Serial.println(str); // Send to Serial
+    delay(10);
+    //digitalWrite(SS,TX);
+    //delay(10);
   #endif
 }
 
@@ -70,8 +67,8 @@ String convertArrayToString(byte arr[]) {
 }
 void printsData(){
   for (int i = 0;i < 8; i++) {
-    show((char)sData[i] + "");
-    //Serial.print(String(sData[i],HEX));
+    //show((char)sData[i] + "");
+    Serial.print(String(sData[i],HEX));
   }
 }
 byte address = 0x4B;
@@ -85,7 +82,7 @@ void Test() {
   sData[5] =  2; // 2 byte so thanh ghi can doc het l� 0x3b
 //  sData[6] = 0x71;
 //  sData[7] = 0xCB;
-  tx_485();
+  tx_4851();
 }
 
 void tx_485()
@@ -96,20 +93,38 @@ void tx_485()
   sData[6] = crcData & 0xff;
   sData[7] = crcData >> 8;
 
-  //show("Send serial:");
-  //printsData();
-  show("Send RS48:");
+  //show("Send RS48:");
   sendArrayToRS485(8);
 //  String str = convertArrayToString(sData);
   
   
   int len = rx_485(3000);
+  delay(1000);
   show(String(len));
+  
   Convert4ByteToFloat(bufferRS[3], bufferRS[4],bufferRS[5],bufferRS[6]);
   
 }
+void tx_4851()
+{
+  signed int  crcData;
+ 
+  crcData = CRC16(6);
+  sData[6] = crcData & 0xff;
+  sData[7] = crcData >> 8;
+
+  //show("Send RS48:");
+  sendArrayToRS485(8);
+//  String str = convertArrayToString(sData);
+  
+  
+  int len = rx_4851(3000);
+  delay(1000);
+  show(String(len));
+  Convert4ByteToFloat(bufferRS[3], bufferRS[4],bufferRS[5],bufferRS[6]);
+  printsData();
+}
 int rx_485(long timeOut) {
-  RS485.flush();
   long len = 0;
   digitalWrite(SS,RX);
   delay(10);
@@ -124,11 +139,25 @@ int rx_485(long timeOut) {
   }
   //while (t++ <= timeOut && !RS485.available());
   //String s = 
-  for (int i = 0; i< len; i++) {
-    //show("== " + String(address + i));
-    show(String(bufferRS[i], HEX));
+  
+//  for (int i = 0; i< len; i++) {
+//    //show("== " + String(address + i));
+//    show(String(bufferRS[i], HEX));
+//  }
+  return len; 
+}
+int rx_4851(long timeOut) {
+  digitalWrite(SS,RX);
+  delay(10);
+  long t = 0;
+  while ( t++ <= 3000 && !RS485.available()) {
+    delay(1);
   }
-  show("End RX");
+  String reponse = RS485.readString();
+  int len = reponse.length();
+  for (int i = 0; i < len; i++) {
+    bufferRS[i] = (char)reponse.charAt(i);
+  }
   return len; 
 }
 
