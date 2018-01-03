@@ -207,7 +207,8 @@ void loop()
     lenRX485 = len;
     show(String(len));
     if (verifyReponseRS485(len)) {
-       Convert4ByteToFloat(bufferRS[3], bufferRS[4],bufferRS[5],bufferRS[6]);
+       float value = Convert4ByteToFloat(bufferRS[3], bufferRS[4],bufferRS[5],bufferRS[6]);
+       show(String(bufferRS[3], HEX) + String(bufferRS[4], HEX) + String(bufferRS[5], HEX) + String(bufferRS[6], HEX));
     }else  {
       show("Reponse RX Error!");
     }
@@ -427,13 +428,14 @@ signed int CRC16(byte arrayData[] ,int iLeng)
   }
   return(CRCHi<<8 | CRCLo);
 }
-void Convert4ByteToFloat(byte HH, byte HL, byte LH, byte LL) {
+float Convert4ByteToFloat(byte HH, byte HL, byte LH, byte LL) {
   unsigned long bits = (HH << 24) | (HL << 16) | (LH << 8) | LL;
   int sign = ((bits >> 31) == 0) ? 1.0 : -1.0;
   long e = ((bits >> 23) & 0xff);
   long m = (e == 0) ? (bits & 0x7fffff) << 1 : (bits & 0x7fffff) | 0x800000;
   float f = sign * m * pow(2, e - 150);
   show(String(f));
+  return f;
 }
 void ConfigDefault()
 {
@@ -598,7 +600,9 @@ void StartServer()
 {
   server.on("/", webConfig);
   server.on("/home", webViewHome);
+  server.on("/register", webRegisterMaps);
   server.onNotFound(handleNotFound);
+  //server.onNotFound(webConfig);
   server.begin();
   Serial.println("HTTP server started");
 }
@@ -623,7 +627,11 @@ void webViewHome() {
   html += webView();
   server.send ( 200, "text/html",html);
 }
-
+void webRegisterMaps() {
+  String html = Title();
+  html += RegisterMaps();
+  server.send ( 200, "text/html",html);
+}
 
 String Title(){
   String html = "<html>\
@@ -648,6 +656,7 @@ String Title(){
     a {text-decoration: none;}\
     table {width: 100%;}\
     .column {width: 50%;text-align: center;}\
+    .column3 {width: 33.3%;text-align: center;}\
     .noboder {border: none;}\
   </style>\
   </head>";
@@ -768,17 +777,13 @@ String webView(){
     <div class=\"content\">\
     <form action=\"\" method=\"get\">\
       <table>\
-      <tr class=\"row\"><th>ID</th><th>NAME RF</th></tr>"+ SendTRViewHome() +"\
+      <tr class=\"row\"><th>Value</th><th>Convert to Float</th></tr>"+ SendTRViewHome() +"\
       </table>\
-      <br><hr>\
-      <div class=\"listBtn\">\
-      <button type=\"submit\"><a href=\"/login\">Login</a></button>\
-      </div>\
     </form>\
     <script type=\"text/javascript\">\
       setInterval(function() {\
       window.location.reload();\
-      }, " + String(timeStation) + ");\
+      }, " + String(timeStation / 2) + ");\
     </script>\
     </div>\
   </body>\
@@ -792,8 +797,13 @@ String RegisterMaps(){
     <h1>Register Maps</h1>\
     </div>\
     <div class=\"content\">\
-      <table><tr class=\"row\"><th>Address</th><th>Hex Address</th></tr>"+ SendTRRegisterMaps() +"</table>\
+      <table><tr class=\"row\"><th>Address</th><th>Hex Address</th><th>data</th></tr>"+ SendTRRegisterMaps() +"</table>\
     </div>\
+    <script type=\"text/javascript\">\
+      setInterval(function() {\
+      window.location.reload();\
+      }, " + String(timeStation / 2) + ");\
+    </script>\
   </body>\
   </html>";
   return content;
@@ -801,14 +811,19 @@ String RegisterMaps(){
 String SendTRRegisterMaps()
 {
   String s="";
-  for (int i = 0; i< lenRX485; i++) {
-    s += "<tr class=\"row" + isTrActive(i) + "\"><td class=\"column\">"+ id + "-" + getAddress(bufferRF[i]) +"</td><td class=\"column\">"+ getData(bufferRF[i]) +"</td></tr>";
+  int address = 0;
+  for (int i = 3; i< lenRX485 - 2; i = i + 2) {
+    address = startAddress + (i - 3)/2;
+    s += "<tr class=\"row\"><td class=\"column3\">"+ String(address) +"</td><td class=\"column3\">" + String(address,HEX) +  "</td><td class=\"column3\">" + String(bufferRS[i],HEX) + " " + String(bufferRS[i+1],HEX) + "</td></tr>";  
+  }
   return s;
 } 
 String SendTRViewHome()
 {
   String s="";
-  //s += "<tr class=\"row" + isTrActive(i) + "\"><td class=\"column\">"+ id + "-" + getAddress(bufferRF[i]) +"</td><td class=\"column\">"+ getData(bufferRF[i]) +"</td></tr>";
+  float value = Convert4ByteToFloat(bufferRS[3], bufferRS[4],bufferRS[5],bufferRS[6]);
+  String str = String(bufferRS[3], HEX) + " " + String(bufferRS[4], HEX) + " " + String(bufferRS[5], HEX) + " " + String(bufferRS[6], HEX);
+  s += "<tr class=\"row\"><td class=\"column\">"+ str + "</td><td class=\"column\">"+ String(value) +"</td></tr>";
   return s;
 }
 
@@ -960,12 +975,14 @@ void GiaTriThamSo()
         if (Value != String(startAddress,HEX)){
           startAddress =  StringHexToInt(Value.c_str());
           show("Set startAddress : " + String(startAddress,HEX));
+          requestDataInventer();
         }
       }
       else if (Name.indexOf("txtTotalRegister") >= 0){
         if (Value != String(totalRegister,HEX)){
           totalRegister =  StringHexToInt(Value.c_str());
           show("Set totalRegister : " + String(totalRegister,HEX));
+          requestDataInventer();
         }
       }
 
