@@ -9,8 +9,9 @@
 //#define RX_485 13
 //SoftwareSerial RS485(RX_485, TX_485);
 
+#define SHOW_ALL_RESPONSE true
 #define ENABLE_RS485 true
-#define SS 12
+#define SS 5
 #define TX HIGH
 #define RX LOW 
 #define RS485 Serial
@@ -19,7 +20,7 @@ ESP8266WebServer server(80);
 
 #define RESET 4 
 #define DEBUGGING
-#define LED 2 
+#define LED 12 
 
 
 #define ADDR 0
@@ -139,6 +140,7 @@ bool flagReconnectAccesspoint = false;
 
 void setup()
 {
+  delay(2000);
   Serial.begin(9600);
   delay(1000);
   idWebSite = 0;
@@ -167,20 +169,20 @@ void setup()
   AccessPoint();
   delay(1000);
   StartServer();
-  digitalWrite(LED,HIGH);
-  delay(1000);
-  // Notify: Connect AP success. 
-  blinkLed();
-  delay(1000);
   timeUp = millis();
   t1 = timeUp;
   requestDataInventer();
   show("End Setup()");
+  digitalWrite(LED,HIGH);
   if (ENABLE_RS485) 
     ConfigRS485();
+  delay(1000);
+  if (isConnectAP == false) {
+    blinkLed(3,1000);
+  }
 }
 
-bool flagReponse;
+bool flagReponse = false;
 void loop()
 {
   server.handleClient();
@@ -189,28 +191,42 @@ void loop()
     t = millis();
   }
   // reconnect access point, if isConnectAP = false
-  if (flagReconnectAccesspoint && isConnectAP && (millis() - t1 > timeReconnectAccessPoint)) {
+  if (flagReconnectAccesspoint && !isConnectAP && (millis() - t1 > timeReconnectAccessPoint)) {
     ConnectWifi(timeStation);
-    blinkLed();
+    if (isConnectAP == false) {
+      blinkLed(3,2000);
+    }
     t1 = millis();
   }
-   
   // 
   if (ENABLE_RS485 && (millis() - timeUp > timeUpload)) {
+    if (flagReponse) { // trước khi gửi flagReponse == true thì ko giao tiếp dc với sensor
+      blinkLed(1,100);
+    }
     sendRequestToRS485();
     flagReponse = true;
     timeUp = millis();
   }
-
   if (flagReponse && RS485.available() > 0) {
     int len = readReponseRX485();
     lenRX485 = len;
     show(String(len));
     if (verifyReponseRS485(len)) {
        float value = Convert4ByteToFloat(bufferRS[3], bufferRS[4],bufferRS[5],bufferRS[6]);
-       show(String(bufferRS[3], HEX) + String(bufferRS[4], HEX) + String(bufferRS[5], HEX) + String(bufferRS[6], HEX));
+       
+       #if SHOW_ALL_RESPONSE
+        for (int i = 0 ; i < lenRX485; i++) {
+          show(String(bufferRS[i], HEX));
+        }
+       #else
+        if (len >= 9)
+          show(String(bufferRS[3], HEX) + String(bufferRS[4], HEX) + String(bufferRS[5], HEX) + String(bufferRS[6], HEX));
+       #endif
     }else  {
       show("Reponse RX Error!");
+      if (lenRX485 == 0) { // trước khi gửi flagReponse == true thì ko giao tiếp dc với sensor
+        blinkLed(1,500);
+      }
     }
     flagReponse = false;
   }
@@ -243,13 +259,11 @@ void show(String str)
     delay(10);
   #endif
 }
-void blinkLed() {
-  if (isConnectAP == false){
-    int i=0;
-    while (i++ < 3) {
-      digitalWrite(LED,LOW);delay(500);
-      digitalWrite(LED,HIGH);delay(500);
-    }
+void blinkLed(int repeat, long tDelay) {
+  int i=0;
+  while (i++ < repeat) {
+    digitalWrite(LED,LOW);delay(tDelay);
+    digitalWrite(LED,HIGH);delay(tDelay);
   }
 }
 void GPIO()
@@ -357,14 +371,14 @@ bool verifyReponseRS485(int len) {
   crcData = CRC16(bufferRS, len - 2);
   int crcL = crcData & 0xff;
   int crcH = crcData >> 8;
-  if (bufferRS[0] != sData[0] 
-    || bufferRS[1] != sData[1] 
-    || bufferRS[2] != sData[2]
-    || bufferRS[len-2] != crcL
-    || bufferRS[len-1] != crcH) {
-    return true;
+  if (bufferRS[0] != sData[0] ||  bufferRS[1] != sData[1])
+    return false;
+  //show("Pass 4 byte first");
+  if (bufferRS[len-2] != crcL || bufferRS[len-1] != crcH) {
+    return false;
   }
-  return false;
+  //show("Pass CRC");
+  return true;
 }
 void sendRequestToRS485() {
   digitalWrite(SS,TX);
@@ -393,10 +407,22 @@ int rx_4851(long timeOutReponse) {
 int readReponseRX485() {
   String reponse = RS485.readString();
   int len = reponse.length();
-  for (int i = 0; i < len; i++) {
-    bufferRS[i] = (char)reponse.charAt(i);
+  
+  int start = -1,index = 0;
+  while ( ++start < (len -2) ) {
+    char c = (char)reponse.charAt(start);
+    if (c == sData[0])
+      break ;
   }
-  return len;
+  int byteCount =  (char)reponse.charAt(start+2);
+  int totalByteRead = 3 + byteCount + 2;
+  if (totalByteRead <= len ) {
+    while (start < len && index < totalByteRead) {
+      bufferRS[index] = (char)reponse.charAt(start++);
+      index++;
+    }
+  }
+  return index;
 }
 signed int CRC16(byte arrayData[] ,int iLeng)
 {
@@ -530,13 +556,15 @@ void ReadConfig()
 }
 void AccessPoint()
 {
+  String password = ""; // OPEN 
   show("Access Point Config");
   show(apSSID);
-  show(apPASS);  
+  show(apPASS); 
+  
   //WiFi.disconnect();
   delay(1000);
   // Wait for connection
-  String strSoftAP = (WiFi.softAP(apSSID.c_str(), apPASS.c_str()) == true) ? "Ready" : "Failed!";
+  String strSoftAP = (WiFi.softAP(apSSID.c_str(), password.c_str()) == true) ? "Ready" : "Failed!";
   //String strSoftAP = (WiFi.softAP(ssid, password) == true) ? "Ready" : "Failed!";
   show(strSoftAP);
   IPAddress myIP = WiFi.softAPIP();
@@ -700,9 +728,6 @@ String ContentLogin(){
   return content;
 }
 String ContentConfig(){
-  String strStartAddress = String(startAddress, HEX);
-  show(strStartAddress);
-  String strTotalRegister = String(totalRegister, HEX);
   String content = "<body>\
     <div class=\"head1\">\
       <h1>Setting config</h1>\
@@ -719,7 +744,7 @@ String ContentConfig(){
         <div class=\"subtitle\">Access Point mode (This is a Access Point)</div>\
         <div class=\"left\">Name</div>\
         <div class=\"right\">: <input class=\"input\" placeholder=\"Tên wifi phát ra\" name=\"txtAPName\" value=\""+apSSID+"\" required></div>\
-        <div class=\"left\">Password</div>\
+        <div class=\"left\">Password(Pass login)</div>\
         <div class=\"right\">: <input class=\"input\" placeholder=\"Mật khẩu wifi phát ra\" name=\"txtAPPass\" value=\""+apPASS+"\"></div>\
         <div class=\"subtitle\">Server Upload Data</div>\
         <div class=\"left\">User Name</div>\
