@@ -149,7 +149,7 @@ void setup()
   EEPROM.begin(512);
   delay(1000);
   GPIO();
-  //WiFi.mode(WIFI_AP_STA);
+  WiFi.mode(WIFI_AP_STA);
   if (EEPROM.read(500) != 255 || flagClear){
     ClearEEPROM();
     ConfigDefault();
@@ -159,12 +159,12 @@ void setup()
   delay(2000);
   ConnectWifi(timeStation);
   delay(1000);
-//  if (isConnectAP == false)
-//  {
-//    //WiFi.disconnect();
-//    WiFi.mode(WIFI_AP);
-//    show("Set WIFI_AP");
-//  }
+  if (isConnectAP == false)
+  {
+    //WiFi.disconnect();
+    WiFi.mode(WIFI_AP);
+    show("Set WIFI_AP");
+  }
   delay(1000);
   AccessPoint();
   delay(1000);
@@ -976,6 +976,12 @@ void GiaTriThamSo()
         if (Value != String(selectedBaudrate)){
           selectedBaudrate = atol(Value.c_str());
           show("Set selectedBaudrate : " + String(selectedBaudrate));
+        }
+      }
+      else if (Name.indexOf("txtIdSlave") >= 0){
+        if (Value != String(idSlave)){
+          idSlave = atol(Value.c_str());
+          show("Set idSlave : " + String(idSlave));
         }
       }
       else if (Name.indexOf("txtSelectedDataSize") >= 0){
