@@ -11,7 +11,9 @@
 
 #define SHOW_ALL_RESPONSE true
 #define ENABLE_RS485 true
-#define SS 5
+#define RANDOM_RESPONSE_RS485 true
+//#define SS 5
+#define SS 12
 #define TX HIGH
 #define RX LOW 
 #define RS485 Serial
@@ -20,8 +22,8 @@ ESP8266WebServer server(80);
 
 #define RESET 4 
 #define DEBUGGING
-#define LED 12 
-
+//#define LED 12 
+#define LED 2 
 
 #define ADDR 0
 #define ADDR_STASSID (ADDR)
@@ -58,9 +60,9 @@ ESP8266WebServer server(80);
 #define AP_SSID_DEFAULT "MBELL"
 #define AP_PASS_DEFAULT ID_DEFAULT
 
-#define USER_NAME_DEFAULT "TEST"
-#define CODE_DEFAULT "1234567890"
-#define URL_UPLOAD_DEFAULT "http://127.0.0.1/projects/PHP/test/updateData.php?"
+#define USER_NAME_DEFAULT "Den"
+#define CODE_DEFAULT "1321060356"
+#define URL_UPLOAD_DEFAULT "http://mbell.vn/QLNL/API/updateData.php?"
 #define TIME_UPLOAD_DEFAULT 8000
 
 #define ID_SLAVE_DEFAULT 0x02
@@ -86,7 +88,7 @@ String apSSID, apPASS;
 long timeStation = 7000;
 int idWebSite = 0;
 
-bool flagClear = false;
+bool flagClear = true;
 int countBaudrates = 9;
 long Baudrates[] = {2400, 4800, 9600, 14400, 19200, 28800, 38400, 57600,115200};
 long selectedBaudrate ;
@@ -207,21 +209,28 @@ void loop()
     flagReponse = true;
     timeUp = millis();
   }
-  if (flagReponse && RS485.available() > 0) {
+  if (flagReponse && ( RANDOM_RESPONSE_RS485 || RS485.available() > 0 )) {
     int len = readReponseRX485();
     lenRX485 = len;
     show(String(len));
-    if (verifyReponseRS485(len)) {
-       float value = Convert4ByteToFloat(bufferRS[3], bufferRS[4],bufferRS[5],bufferRS[6]);
-       
-       #if SHOW_ALL_RESPONSE
-        for (int i = 0 ; i < lenRX485; i++) {
-          show(String(bufferRS[i], HEX));
-        }
-       #else
-        if (len >= 9)
-          show(String(bufferRS[3], HEX) + String(bufferRS[4], HEX) + String(bufferRS[5], HEX) + String(bufferRS[6], HEX));
-       #endif
+    if (RANDOM_RESPONSE_RS485 || verifyReponseRS485(len)) {
+       String dataUploadToServer = "";
+       if (RANDOM_RESPONSE_RS485) {
+         dataUploadToServer = randomDataResponse();
+       } else {
+         float value = Convert4ByteToFloat(bufferRS[3], bufferRS[4],bufferRS[5],bufferRS[6]);
+         #if SHOW_ALL_RESPONSE
+          for (int i = 0 ; i < lenRX485; i++) {
+            show(String(bufferRS[i], HEX));
+          }
+         #else
+          if (len >= 9)
+            show(String(bufferRS[3], HEX) + String(bufferRS[4], HEX) + String(bufferRS[5], HEX) + String(bufferRS[6], HEX));
+         #endif
+       }
+       if (dataUploadToServer != "") {
+          HTTP_REQUEST(urlUpload, dataUploadToServer);
+       }
     }else  {
       show("Reponse RX Error!");
       if (lenRX485 == 0) { // trước khi gửi flagReponse == true thì ko giao tiếp dc với sensor
@@ -265,6 +274,9 @@ void blinkLed(int repeat, long tDelay) {
     digitalWrite(LED,LOW);delay(tDelay);
     digitalWrite(LED,HIGH);delay(tDelay);
   }
+}
+String randomDataResponse() {
+  return "UseName=" + UseName + "&code=" + code + "&Data=\"U\":\"" + String(random(220,250)) + "\",\"I\":\"" + String(random(5,10)) + "\"&Model=Inventer";
 }
 void GPIO()
 {
@@ -607,12 +619,13 @@ void ConnectWifi(long timeOut)
  * Example : request= https://www.google.com.vn/?gfe_rd=cr&ei=yBDmWPrYHubc8ge42aawBA&gws_rd=ssl#q=ESP8266&*
  * Return: Page content.
  */
-void HTTP_REQUEST(String request, String Url)
+void HTTP_REQUEST(String Url, String request)
 {
   if(WiFi.status()== WL_CONNECTED)
   {  
     HTTPClient http;  //Declare an object of class HTTPClient
     String strRequestHTTP = Url + request;
+    show("");
     show(strRequestHTTP);
     http.begin(strRequestHTTP);//Specify request destination
     int httpCode= http.GET();//Send the request
