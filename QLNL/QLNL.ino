@@ -11,9 +11,9 @@
 
 #define SHOW_ALL_RESPONSE true
 #define ENABLE_RS485 true
-#define RANDOM_RESPONSE_RS485 true
-//#define SS 5
-#define SS 12
+#define RANDOM_RESPONSE_RS485 false
+#define SS 5
+//#define SS 12
 #define TX HIGH
 #define RX LOW 
 #define RS485 Serial
@@ -22,8 +22,8 @@ ESP8266WebServer server(80);
 
 #define RESET 4 
 #define DEBUGGING
-//#define LED 12 
-#define LED 2 
+#define LED 12 
+//#define LED 2 
 
 #define ADDR 0
 #define ADDR_STASSID (ADDR)
@@ -63,7 +63,7 @@ ESP8266WebServer server(80);
 #define USER_NAME_DEFAULT "Den"
 #define CODE_DEFAULT "1321060356"
 #define URL_UPLOAD_DEFAULT "http://mbell.vn/QLNL/API/updateData.php?"
-#define TIME_UPLOAD_DEFAULT 8000
+#define TIME_UPLOAD_DEFAULT 20000
 
 #define ID_SLAVE_DEFAULT 0x02
 #define BAUDRATE_DEFAULT 9600
@@ -88,7 +88,7 @@ String apSSID, apPASS;
 long timeStation = 7000;
 int idWebSite = 0;
 
-bool flagClear = true;
+bool flagClear = false;
 int countBaudrates = 9;
 long Baudrates[] = {2400, 4800, 9600, 14400, 19200, 28800, 38400, 57600,115200};
 long selectedBaudrate ;
@@ -110,11 +110,21 @@ String modelsInventer[] = {VIPS60};
 String selectedInventer ; 
 
 
+
 unsigned char I1[8],I2[8],I3[8],U1[8],U2[8],U3[8],P1[8],P2[8],P3[8],totalenergy[11];
-unsigned char bufferRS[150]; 
+unsigned char bufferRS[30]; 
 int lenRX485;
 float realnum;
 byte sData[8];
+
+
+int totalCount;
+#define maxLength  20
+float ListValue[maxLength] = {};
+int ListAddress[maxLength] = {};
+String ListLabel[maxLength];
+
+
 
 void DEBUG(String s);
 void GPIO();
@@ -139,18 +149,28 @@ long timeUp;
 long t1;
 long timeReconnectAccessPoint = 120*1000; //60 giay
 bool flagReconnectAccesspoint = false;
-
+long timeSend = 0;
+bool modeTest = false;
 void setup()
 {
-  delay(2000);
+  delay(1000);
   Serial.begin(9600);
+  if (digitalRead(RESET) == LOW)
+  {
+    modeTest = true;
+  }
+  GPIO();
+  delay(1000);
+  if (modeTest) {
+    show("Mode: Test!");
+    blinkLed(3,1000);
+  }
   delay(1000);
   idWebSite = 0;
   isLogin = false;
   WiFi.disconnect();
   EEPROM.begin(512);
   delay(1000);
-  GPIO();
   WiFi.mode(WIFI_AP_STA);
   if (EEPROM.read(500) != 255 || flagClear){
     ClearEEPROM();
@@ -171,20 +191,28 @@ void setup()
   AccessPoint();
   delay(1000);
   StartServer();
-  timeUp = millis();
-  t1 = timeUp;
-  requestDataInventer();
-  show("End Setup()");
   digitalWrite(LED,HIGH);
-  if (ENABLE_RS485) 
+  if (ENABLE_RS485) {
     ConfigRS485();
+  }
+  if (modeTest)
+    requestDataInventer();
+  else ConfigForModel();
   delay(1000);
   if (isConnectAP == false) {
     blinkLed(3,1000);
   }
+  timeUp = millis();
+  timeSend = t1 = timeUp;
+  show("End Setup()");
 }
 
 bool flagReponse = false;
+int timeSendRS485 = 2000; 
+int indexAddress = -1;
+String dataUploadToServer = "";
+String responseUpload;
+
 void loop()
 {
   server.handleClient();
@@ -193,43 +221,72 @@ void loop()
     t = millis();
   }
   // reconnect access point, if isConnectAP = false
-  if (flagReconnectAccesspoint && !isConnectAP && (millis() - t1 > timeReconnectAccessPoint)) {
+  if (!modeTest && flagReconnectAccesspoint && !isConnectAP && (millis() - t1 > timeReconnectAccessPoint)) {
     ConnectWifi(timeStation);
     if (isConnectAP == false) {
-      blinkLed(3,2000);
+      blinkLed(5,2000);
     }
     t1 = millis();
   }
+  
+  if (!modeTest && ENABLE_RS485 && (millis() - timeUp > timeUpload)) {
+    if (!flagReponse) { // giao tiếp dc với sensor (flagReponse == false ) thì upload du lieu 
+      dataUploadToServer = formatData();
+      show(dataUploadToServer);
+      if (isConnectAP) {
+        responseUpload = HTTP_REQUEST(urlUpload, dataUploadToServer);
+        show(responseUpload);
+        blinkLed(2,100);
+      }
+    } else {
+      responseUpload = "False";
+    }
+    timeUp = millis();
+  }
   // 
-  if (ENABLE_RS485 && (millis() - timeUp > timeUpload)) {
+  if (!modeTest && ENABLE_RS485 && totalCount > 0 && (millis() - timeSend > timeSendRS485)) {
+    if (flagReponse) { // trước khi gửi flagReponse == true thì ko giao tiếp dc với sensor
+      ListValue[indexAddress] = 0.00;
+      blinkLed(1,500); 
+    }
+    if (++indexAddress < totalCount ) {
+      requestDataInventer(ListAddress[indexAddress], 2);
+      sendRequestToRS485();
+    }
+    else {
+      indexAddress = -1;
+    }
+    flagReponse = true;
+    timeSend = millis();
+  }
+  // 
+  if (modeTest && ENABLE_RS485 && (millis() - timeSend > timeUpload)) {
     if (flagReponse) { // trước khi gửi flagReponse == true thì ko giao tiếp dc với sensor
       blinkLed(1,100);
     }
     sendRequestToRS485();
     flagReponse = true;
-    timeUp = millis();
+    timeSend = millis();
   }
   if (flagReponse && ( RANDOM_RESPONSE_RS485 || RS485.available() > 0 )) {
     int len = readReponseRX485();
     lenRX485 = len;
-    show(String(len));
+    //show(String(len));
     if (RANDOM_RESPONSE_RS485 || verifyReponseRS485(len)) {
-       String dataUploadToServer = "";
        if (RANDOM_RESPONSE_RS485) {
          dataUploadToServer = randomDataResponse();
        } else {
-         float value = Convert4ByteToFloat(bufferRS[3], bufferRS[4],bufferRS[5],bufferRS[6]);
-         #if SHOW_ALL_RESPONSE
+         if (SHOW_ALL_RESPONSE && modeTest) {
           for (int i = 0 ; i < lenRX485; i++) {
             show(String(bufferRS[i], HEX));
           }
-         #else
-          if (len >= 9)
-            show(String(bufferRS[3], HEX) + String(bufferRS[4], HEX) + String(bufferRS[5], HEX) + String(bufferRS[6], HEX));
-         #endif
-       }
-       if (dataUploadToServer != "") {
-          HTTP_REQUEST(urlUpload, dataUploadToServer);
+         } else {
+           float value = Convert4ByteToFloat(bufferRS[3], bufferRS[4],bufferRS[5],bufferRS[6]);
+           ListValue[indexAddress] = value;
+           ConvertUnit(indexAddress);
+           show(ListLabel[indexAddress]);
+           show(String(ListValue[indexAddress]));
+         }
        }
     }else  {
       show("Reponse RX Error!");
@@ -259,6 +316,28 @@ void loop()
 int StringHexToInt(String strHex) {
   return strtol( &strHex[0], 0, 16);
 }
+void ConfigForModel() {
+  int vips60Address[] = { 0x25, 0x37, 0x47, 0x4d, 0x5d, 0x63, 0x73};
+  String vips60Label[] = { "F", "U1", "I1", "U2", "I2", "U3", "I3"};
+  if (selectedInventer == VIPS60) {
+    totalCount = 7;
+    CopyConfig(vips60Address,vips60Label,totalCount);
+  }else {
+    totalCount = 0;
+  }
+  show("Config for device");
+  for (int i = 0 ; i< totalCount; i++) {
+    show(ListLabel[i]);
+    show(String(ListAddress[i],HEX));
+  }
+}
+void CopyConfig(int listAddress[], String listLabel[], int len) {
+  int index = -1;
+  while ( ++index < len) {
+    ListAddress[index] = listAddress[index];
+    ListLabel[index] = listLabel[index];
+  }
+}
 void show(String str)
 {
   #ifdef DEBUGGING 
@@ -277,6 +356,25 @@ void blinkLed(int repeat, long tDelay) {
 }
 String randomDataResponse() {
   return "UseName=" + UseName + "&code=" + code + "&Data=\"U\":\"" + String(random(220,250)) + "\",\"I\":\"" + String(random(5,10)) + "\"&Model=Inventer";
+}
+
+void ConvertUnit(int i) {
+  if (selectedInventer == VIPS60) {
+    if ( i == 2 || i == 4 || i == 6 ) {
+      ListValue[i] = ListValue[i] * 100; // Chuyen dong dien mA = > A
+    }
+  }
+}
+String formatData() {
+  String str = "UseName=" + UseName + "&code=" + code;
+  str += "&Data=";
+  for (int i = 0; i < totalCount; i++) {
+    str += "\"" + ListLabel[i] + "\":\"" + String(ListValue[i]) + "\"";
+    if (i != (totalCount -1)) 
+      str += ",";
+  }
+  str += "&Model=Inventer";
+  return str;
 }
 void GPIO()
 {
@@ -378,6 +476,20 @@ void requestDataInventer() {
   sData[7] = crcData >> 8;
   printsData();
 }
+void requestDataInventer(int start, int len) {
+  signed int  crcData;
+  sData[0] = idSlave; // SLAVE  address
+  sData[1] = 0x04; //ma ham
+  sData[2] = start >> 8; //
+  sData[3] = start & 0xff ; // 2 byte dia chi
+  sData[4] = len >> 8; //
+  sData[5] =  len & 0xff; // 2 byte so thanh ghi can doc het l� 0x3b
+//  sData[6] = 0x71;
+//  sData[7] = 0xCB;
+  crcData = CRC16(sData, 6);
+  sData[6] = crcData & 0xff;
+  sData[7] = crcData >> 8;
+}
 bool verifyReponseRS485(int len) {
   signed int  crcData; 
   crcData = CRC16(bufferRS, len - 2);
@@ -472,7 +584,6 @@ float Convert4ByteToFloat(byte HH, byte HL, byte LH, byte LL) {
   long e = ((bits >> 23) & 0xff);
   long m = (e == 0) ? (bits & 0x7fffff) << 1 : (bits & 0x7fffff) | 0x800000;
   float f = sign * m * pow(2, e - 150);
-  show(String(f));
   return f;
 }
 void ConfigDefault()
@@ -619,29 +730,33 @@ void ConnectWifi(long timeOut)
  * Example : request= https://www.google.com.vn/?gfe_rd=cr&ei=yBDmWPrYHubc8ge42aawBA&gws_rd=ssl#q=ESP8266&*
  * Return: Page content.
  */
-void HTTP_REQUEST(String Url, String request)
+String HTTP_REQUEST(String Url, String request)
 {
+  String response = "False";
   if(WiFi.status()== WL_CONNECTED)
   {  
     HTTPClient http;  //Declare an object of class HTTPClient
     String strRequestHTTP = Url + request;
-    show("");
-    show(strRequestHTTP);
+    //show("");
+    //show(strRequestHTTP);
     http.begin(strRequestHTTP);//Specify request destination
     int httpCode= http.GET();//Send the request
+    
     if(httpCode > 0){    //Check the returning code
-      String payload = http.getString();   //Get the request response payload
-      show(payload);                     //Print the response payload
+      response = http.getString();   //Get the request response payload
     }
     http.end();   //Close connection
   }
+  return response;
 }
 
 void StartServer()
 {
   server.on("/", webConfig);
-  server.on("/home", webViewHome);
-  server.on("/register", webRegisterMaps);
+  server.on("/homeTest", webViewHome);
+  server.on("/registerTest", webRegisterMaps);
+  server.on("/homeMain", webViewHomeMain);
+  
   server.onNotFound(handleNotFound);
   //server.onNotFound(webConfig);
   server.begin();
@@ -673,7 +788,11 @@ void webRegisterMaps() {
   html += RegisterMaps();
   server.send ( 200, "text/html",html);
 }
-
+void webViewHomeMain() {
+  String html = Title();
+  html += webViewMain();
+  server.send ( 200, "text/html",html);
+}
 String Title(){
   String html = "<html>\
   <head>\
@@ -828,6 +947,29 @@ String webView(){
   </html>";
   return content;
 }
+String webViewMain(){
+  String content = "<body>\
+    <div class=\"head1\">\
+    <h1>" + selectedInventer + "</h1>\
+    </div>\
+    <div class=\"content\">\
+    <form action=\"\" method=\"get\">\
+      <table>\
+      <tr class=\"row\"><th>Label</th><th>Value</th></tr>"+ SendTRViewHomeMain() +"\
+      </table>\
+      <div class=\"left\">Response upload</div>\
+      <div class=\"right\">: " + responseUpload + "</div>\
+    </form>\
+    <script type=\"text/javascript\">\
+      setInterval(function() {\
+      window.location.reload();\
+      }, " + String(timeSendRS485 * totalCount / 2) + ");\
+    </script>\
+    </div>\
+  </body>\
+  </html>";
+  return content;
+}
 String RegisterMaps(){
   GiaTriThamSo();
   String content = "<body>\
@@ -864,7 +1006,14 @@ String SendTRViewHome()
   s += "<tr class=\"row\"><td class=\"column\">"+ str + "</td><td class=\"column\">"+ String(value) +"</td></tr>";
   return s;
 }
-
+String SendTRViewHomeMain()
+{
+  String s="";
+  for (int i = 0; i< totalCount; i++) { 
+    s += "<tr class=\"row\"><td class=\"column\">"+ ListLabel[i] + "</td><td class=\"column\">"+ String(ListValue[i]) +"</td></tr>";
+  }
+  return s;
+}
 String dropdownInventers() {
   String s ="";
   s += "<select class=\"input\" name=\"txtSelectedInventer\">";
