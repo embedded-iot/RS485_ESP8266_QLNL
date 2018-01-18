@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<!-- saved from url=(0096)https://iot-playground.com/blog/2-uncategorised/17-esp8266-wifi-module-and-5v-arduino-connection -->
+<html lang="en-gb" dir="ltr" class="com_content view-article itemid-216 j38 mm-hover  no-touch"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+	
+	<meta name="keywords" content="ESP8266, Arduino 5V, connection">
+	<meta name="author" content="Super User">
+	<meta name="description" content="ESP8266 Arduino 5V connection">
+	<meta name="generator" content="Joomla! - Open Source Content Management">
+	<title>ESP8266 WiFi module and 5V Arduino connection</title>
+	<link href="https://iot-playground.com/component/jcomments/feed/com_content/17" rel="alternate" type="application/rss+xml" title="ESP8266 WiFi module and 5V Arduino connection">
+	<link href="https://iot-playground.com/templates/mypuritycopy/favicon.ico" rel="shortcut icon" type="image/vnd.microsoft.icon">
+	<link href="./ESP8266 WiFi module and 5V Arduino connection_files/bootstrap.css" rel="stylesheet" type="text/css">
+	<link href="./ESP8266 WiFi module and 5V Arduino connection_files/style.css" rel="stylesheet" type="text/css">
+	<link href="./ESP8266 WiFi module and 5V Arduino connection_files/at-jp-styles.css" rel="stylesheet" type="text/css">
+	<link href="./ESP8266 WiFi module and 5V Arduino connection_files/system.css" rel="stylesheet" type="text/css">
+	<link href="./ESP8266 WiFi module and 5V Arduino connection_files/template.css" rel="stylesheet" type="text/css">
+	<link href="./ESP8266 WiFi module and 5V Arduino connection_files/megamenu.css" rel="stylesheet" type="text/css">
+	<link href="./ESP8266 WiFi module and 5V Arduino connection_files/font-awesome.min.css" rel="stylesheet" type="text/css">
+	<link href="./ESP8266 WiFi module and 5V Arduino connection_files/corporate.css" rel="stylesheet" type="text/css">
+	<link href="./ESP8266 WiFi module and 5V Arduino connection_files/kunenalatest.css" rel="stylesheet" type="text/css">
+	<script async="" src="./ESP8266 WiFi module and 5V Arduino connection_files/analytics.js.tải xuống"></script><script type="application/json" class="joomla-script-options loaded">{"csrf.token":"1750dbbf79d6f05fb1cec905264acb7f","system.paths":{"root":"","base":""},"system.keepalive":{"interval":840000,"uri":"\/component\/ajax\/?format=json"}}</script>
+	<script src="./ESP8266 WiFi module and 5V Arduino connection_files/jcomments-v2.3.js.tải xuống" type="text/javascript"></script>
+	<script src="./ESP8266 WiFi module and 5V Arduino connection_files/ajax.js.tải xuống" type="text/javascript"></script>
+	<script src="./ESP8266 WiFi module and 5V Arduino connection_files/jquery.min.js.tải xuống" type="text/javascript"></script>
+	<script src="./ESP8266 WiFi module and 5V Arduino connection_files/jquery-noconflict.js.tải xuống" type="text/javascript"></script>
+	<script src="./ESP8266 WiFi module and 5V Arduino connection_files/jquery-migrate.min.js.tải xuống" type="text/javascript"></script>
+	<script src="./ESP8266 WiFi module and 5V Arduino connection_files/caption.js.tải xuống" type="text/javascript"></script>
+	<script src="./ESP8266 WiFi module and 5V Arduino connection_files/bootstrap.js.tải xuống" type="text/javascript"></script>
+	<script src="./ESP8266 WiFi module and 5V Arduino connection_files/jquery.tap.min.js.tải xuống" type="text/javascript"></script>
+	<script src="./ESP8266 WiFi module and 5V Arduino connection_files/script.js.tải xuống" type="text/javascript"></script>
+	<script src="./ESP8266 WiFi module and 5V Arduino connection_files/menu.js.tải xuống" type="text/javascript"></script>
+	<script src="./ESP8266 WiFi module and 5V Arduino connection_files/nav-collapse.js.tải xuống" type="text/javascript"></script>
+	<script src="./ESP8266 WiFi module and 5V Arduino connection_files/core.js.tải xuống" type="text/javascript"></script>
+	<!--[if lt IE 9]><script src="/media/system/js/polyfill.event.js?e2dc083db2fface441c5b50d119e6615" type="text/javascript"></script><![endif]-->
+	<script src="./ESP8266 WiFi module and 5V Arduino connection_files/keepalive.js.tải xuống" type="text/javascript"></script>
+	<script type="text/javascript">
+jQuery(window).on('load',  function() {
+				new JCaption('img.caption');
+			});
+jQuery(function($){ $(".hasTooltip").tooltip({"html": true,"container": "body"}); });
+	</script>
+	<script type="text/javascript" src="./ESP8266 WiFi module and 5V Arduino connection_files/addthis_widget.js.tải xuống"></script>
+
+	
+<!-- META FOR IOS & HANDHELD -->
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+	<style type="text/stylesheet">
+		@-webkit-viewport   { width: device-width; }
+		@-moz-viewport      { width: device-width; }
+		@-ms-viewport       { width: device-width; }
+		@-o-viewport        { width: device-width; }
+		@viewport           { width: device-width; }
+	</style>
+	<script type="text/javascript">
+		//<![CDATA[
+		if (navigator.userAgent.match(/IEMobile\/10\.0/)) {
+			var msViewportStyle = document.createElement("style");
+			msViewportStyle.appendChild(
+				document.createTextNode("@-ms-viewport{width:auto!important}")
+			);
+			document.getElementsByTagName("head")[0].appendChild(msViewportStyle);
+		}
+		//]]>
+	</script>
+<meta name="HandheldFriendly" content="true">
+<meta name="apple-mobile-web-app-capable" content="YES">
+<!-- //META FOR IOS & HANDHELD -->
+
+
+
+
+<!-- Le HTML5 shim and media query for IE8 support -->
+<!--[if lt IE 9]>
+<script src="//html5shim.googlecode.com/svn/trunk/html5.js"></script>
+<script type="text/javascript" src="/plugins/system/t3/base-bs3/js/respond.min.js"></script>
+<![endif]-->
+
+<!-- You can add Google Analytics here or use T3 Injection feature -->
+
+<!--[if lt IE 9]>
+<link rel="stylesheet" href="/templates/mypuritycopy/css/ie8.css" type="text/css" />
+<![endif]-->
+	<link rel="stylesheet" href="./ESP8266 WiFi module and 5V Arduino connection_files/aff.css" type="text/css">
+<link rel="stylesheet" href="./ESP8266 WiFi module and 5V Arduino connection_files/custom.css" type="text/css">
+<style type="text/css">.t3-megamenu.animate .animating > .mega-dropdown-menu,.t3-megamenu.animate.slide .animating > .mega-dropdown-menu > div {transition-duration: 400ms !important;-webkit-transition-duration: 400ms !important;}</style></head>
+
+<body>
+
+<div class="t3-wrapper corporate"> <!-- Need this wrapper for off-canvas menu. Remove if you don't use of-canvas -->
+
+	
+<!-- MAIN NAVIGATION -->
+<header id="t3-mainnav" class="wrap navbar navbar-default navbar-fixed-top t3-mainnav">
+
+	<!-- OFF-CANVAS -->
+		<!-- //OFF-CANVAS -->
+
+	<div class="container">
+
+		<!-- NAVBAR HEADER -->
+		<div class="navbar-header">
+
+			<!-- LOGO -->
+			<div class="logo logo-text">
+				<div class="logo-text">
+					<a href="https://iot-playground.com/" title="iot-playground.com">
+						
+												
+						<span>iot-playground.com</span>
+					</a>
+				</div>
+			</div>
+			<!-- //LOGO -->
+
+											<button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".t3-navbar-collapse">
+					<i class="fa fa-bars"></i>
+				</button>
+			
+	    
+		</div>
+		<!-- //NAVBAR HEADER -->
+
+		<!-- NAVBAR MAIN -->
+				<nav class="t3-navbar-collapse navbar-collapse collapse"><ul class="nav navbar-nav level0">
+<li>
+<a href="https://iot-playground.com/">Home </a>
+
+</li>
+<li>
+<a href="https://iot-playground.com/build">Build </a>
+
+</li>
+<li class="dropdown">
+<a href="https://iot-playground.com/store" data-toggle="dropdown" data-target="#">Store <em class="caret"></em></a>
+
+
+<ul class="level1 dropdown-menu"><li>
+<a href="https://iot-playground.com/store/easyiot-server">EasyIoT server </a>
+
+</li><li>
+<a href="https://iot-playground.com/store/arduino">Arduino </a>
+
+</li><li>
+<a href="https://iot-playground.com/store/sensors">Sensors </a>
+
+</li><li>
+<a href="https://iot-playground.com/store/transcievers">Transcievers </a>
+
+</li><li>
+<a href="https://iot-playground.com/store/dimmer-light">Dimmer/light </a>
+
+</li><li>
+<a href="https://iot-playground.com/store/power-supply">Power supply </a>
+
+</li><li>
+<a href="https://iot-playground.com/store/small-electronic-components">Small electronic components </a>
+
+</li><li>
+<a href="https://iot-playground.com/store/cases">Cases </a>
+
+</li><li>
+<a href="https://iot-playground.com/store/prototyping">Prototyping </a>
+
+</li><li>
+<a href="https://iot-playground.com/store/soldering">Soldering </a>
+
+</li></ul></li>
+<li>
+<a href="https://iot-playground.com/forum">Community forum </a>
+
+</li>
+<li>
+<a href="https://easyiot-cloud.com/" target="_blank">EasyIoT Cloud</a>
+
+</li>
+<li>
+<a href="https://iot-playground.com/download">Download </a>
+
+</li>
+<li class="current active">
+<a href="https://iot-playground.com/blog">Blog </a>
+
+</li>
+</ul></nav>
+		
+		<nav class="t3-navbar navbar-collapse collapse">
+			<div class="t3-megamenu animate fading" data-duration="400" data-responsive="true">
+<ul class="nav navbar-nav level0">
+<li data-id="101" data-level="1">
+<a class="" href="https://iot-playground.com/" data-target="#">Home </a>
+
+</li>
+<li data-id="136" data-level="1">
+<a class="" href="https://iot-playground.com/build" data-target="#">Build </a>
+
+</li>
+<li class="dropdown mega" data-id="161" data-level="1">
+<a class=" dropdown-toggle" href="https://iot-playground.com/store" data-target="#" data-toggle="dropdown">Store <em class="caret"></em></a>
+
+<div class="nav-child dropdown-menu mega-dropdown-menu"><div class="mega-dropdown-inner">
+<div class="row">
+<div class="col-xs-12 mega-col-nav" data-width="12"><div class="mega-inner">
+<ul class="mega-nav level1">
+<li data-id="162" data-level="2">
+<a class="" href="https://iot-playground.com/store/easyiot-server" data-target="#">EasyIoT server </a>
+
+</li>
+<li data-id="163" data-level="2">
+<a class="" href="https://iot-playground.com/store/arduino" data-target="#">Arduino </a>
+
+</li>
+<li data-id="164" data-level="2">
+<a class="" href="https://iot-playground.com/store/sensors" data-target="#">Sensors </a>
+
+</li>
+<li data-id="169" data-level="2">
+<a class="" href="https://iot-playground.com/store/transcievers" data-target="#">Transcievers </a>
+
+</li>
+<li data-id="165" data-level="2">
+<a class="" href="https://iot-playground.com/store/dimmer-light" data-target="#">Dimmer/light </a>
+
+</li>
+<li data-id="166" data-level="2">
+<a class="" href="https://iot-playground.com/store/power-supply" data-target="#">Power supply </a>
+
+</li>
+<li data-id="167" data-level="2">
+<a class="" href="https://iot-playground.com/store/small-electronic-components" data-target="#">Small electronic components </a>
+
+</li>
+<li data-id="168" data-level="2">
+<a class="" href="https://iot-playground.com/store/cases" data-target="#">Cases </a>
+
+</li>
+<li data-id="170" data-level="2">
+<a class="" href="https://iot-playground.com/store/prototyping" data-target="#">Prototyping </a>
+
+</li>
+<li data-id="171" data-level="2">
+<a class="" href="https://iot-playground.com/store/soldering" data-target="#">Soldering </a>
+
+</li>
+</ul>
+</div></div>
+</div>
+</div></div>
+</li>
+<li data-id="135" data-level="1">
+<a class="" href="https://iot-playground.com/forum" data-target="#">Community forum </a>
+
+</li>
+<li data-id="215" data-level="1" class="">
+<a class="" href="https://easyiot-cloud.com/" target="_blank" data-target="#">EasyIoT Cloud</a>
+
+</li>
+<li data-id="103" data-level="1" class="">
+<a class="" href="https://iot-playground.com/download" data-target="#">Download </a>
+
+</li>
+<li class="current active" data-id="216" data-level="1">
+<a class="" href="https://iot-playground.com/blog" data-target="#">Blog </a>
+
+</li>
+</ul>
+</div>
+
+		</nav>
+    <!-- //NAVBAR MAIN -->
+
+	</div>
+</header>
+<!-- //MAIN NAVIGATION -->
+
+
+
+
+
+  
+
+  
+
+	
+
+<div id="t3-mainbody" class="container t3-mainbody">
+	<div class="row">
+
+		<!-- MAIN CONTENT -->
+		<div id="t3-content" class="t3-content col-xs-12 col-md-6  col-md-push-3">
+						
+
+<div class="item-page clearfix">
+
+
+<!-- Article -->
+<article itemscope="" itemtype="http://schema.org/Article">
+	<meta itemprop="inLanguage" content="en-GB">
+	<meta itemprop="url" content="/blog/2-uncategorised/17-esp8266-wifi-module-and-5v-arduino-connection">
+
+      
+<header class="article-header clearfix">
+	<h1 class="article-title" itemprop="name">
+					<a href="https://iot-playground.com/blog/2-uncategorised/17-esp8266-wifi-module-and-5v-arduino-connection" itemprop="url" title="ESP8266 WiFi module and 5V Arduino connection">
+				ESP8266 WiFi module and 5V Arduino connection</a>
+			</h1>
+
+			</header>
+  
+  <!-- Aside -->
+    <!-- //Aside -->
+
+  
+      	<div class="tags">
+																	<span class="tag-5 tag-list0" itemprop="keywords">
+					<a href="https://iot-playground.com/component/tags/tag/arduino" class="label label-info">
+						Arduino					</a>
+				</span>
+																				<span class="tag-7 tag-list1" itemprop="keywords">
+					<a href="https://iot-playground.com/component/tags/tag/sensor" class="label label-info">
+						sensor					</a>
+				</span>
+																				<span class="tag-11 tag-list2" itemprop="keywords">
+					<a href="https://iot-playground.com/component/tags/tag/esp8266" class="label label-info">
+						ESP8266					</a>
+				</span>
+						</div>
+  
+  
+  
+	
+  
+	
+	<section class="article-content clearfix" itemprop="articleBody">
+		 <div class="joomla_add_this"><!-- AddThis Button BEGIN -->
+<script type="text/javascript">
+var addthis_product = 'jlp-2.0';
+var addthis_config = {
+pubid:'ra-4d96f8fd4a31b165',
+data_track_clickback:true,
+ui_language:'en'
+}
+</script>
+<div class="addthis_toolbox addthis_default_style " addthis:url="https://iot-playground.com/blog/2-uncategorised/17-esp8266-wifi-module-and-5v-arduino-connection" addthis:title="ESP8266 WiFi module and 5V Arduino connection">
+									<a class="addthis_button_preferred_1"></a>
+									<a class="addthis_button_preferred_2"></a>
+									<a class="addthis_button_preferred_3"></a>
+									<a class="addthis_button_preferred_4"></a>
+									<a class="addthis_button_compact"></a>
+									<a class="addthis_counter addthis_bubble_style"></a>
+								</div><!-- AddThis Button END -->
+</div><p><strong>In this tutorial we will show how to connect ESP8266 WiFi module and 5V Arduino. Since ESP8266 is not 5V tolerant we need some kind of voltage level shifter.</strong></p>
+ 
+<p><a title="ESP8266" href="https://iot-playground.com/69-esp8266" target="_blank">ESP8266</a>&nbsp;module is not 5V tolerant. It works on 3.3V power suplay. Most Arduinos works on 5V. If we want connect both components we need to adapt voltage levels between. If you are using 3.3V Arduino, then read&nbsp;<a title="ESP8266 WiFi and 3.3V Arduino connection" href="https://iot-playground.com/2-uncategorised/13-esp8266-wifi-module-arduino-connection" target="_blank">ESP8266 WiFi and 3.3V Arduino connection</a>.</p>
+<p>First we need 3.3V power supply for ESP8266. Good choice for regulator is AMS1117 3.3V. Simple circuit is shown below. Be sure to use big enough capacitor.</p>
+<p>ESP8266 VCC and&nbsp;<span style="font-family: &#39;Helvetica Neue&#39;, Helvetica, Arial, sans-serif;"><span style="font-size: 13px; line-height: 15.8079996109009px;">CH_PHD are&nbsp;connected to 3.3V power&nbsp;</span><span style="font-size: 13px;">supply</span><span style="font-size: 13px; line-height: 15.8079996109009px;">.</span></span></p>
+<p><span style="font-family: &#39;Helvetica Neue&#39;, Helvetica, Arial, sans-serif;"><span style="font-size: 13px; line-height: 15.8079996109009px;"><img src="./ESP8266 WiFi module and 5V Arduino connection_files/ESP8266_V091.png" alt="ESP8266 pinout" width="371" height="548"></span></span></p>
+<p>&nbsp;</p>
+<p><span style="font-family: &#39;Helvetica Neue&#39;, Helvetica, Arial, sans-serif;"><span style="font-size: 13px; line-height: 15.8079996109009px;">AMS1117 3.3V power supply.</span></span></p>
+<p>&nbsp;<img src="./ESP8266 WiFi module and 5V Arduino connection_files/AMS1117.png" alt="AMS117 3.3V power supply" width="832" height="475"></p>
+<p>Next we need shift voltage levels on data lines. To convert 5V output to 3.3V input level we can use simple resistor divider. In this circuit we use 20K and&nbsp;10K resistors. With this level shifter we can connect Arduino TX to ESP8266 RX and Arduino digital pin and ESP8266 reset pin.</p>
+<p>&nbsp;</p>
+<p>Arduino TX -&gt; ESP8266 RX</p>
+<p><img src="./ESP8266 WiFi module and 5V Arduino connection_files/3-1-2015_13-47-43.png" alt="Arduino TX, ESP8266 RX" width="526" height="411">&nbsp;</p>
+<p>Arduino DO pin -&gt; ESP8266 reset</p>
+<p><img src="./ESP8266 WiFi module and 5V Arduino connection_files/3-1-2015_13-50-55.png" alt="Arduino DO - &gt; ESP8266 reset" width="546" height="429"></p>
+<p>&nbsp;</p>
+<p>To connect Arduino RX and ESP8266 TX you may try without level shifter. 3.3V should be enough for logical one in 5V Arduino. &nbsp;Just connect Arduino RX and ESP TX pin. If that doesn't work use level shifter.</p>
+<p>For level shifter we need&nbsp;active component. In circuit below we use NPN transistor 2N2222 and two resistors. This level shifter is suitable to connect Arduino RX and ESP8266 TX pin.</p>
+<p><img src="./ESP8266 WiFi module and 5V Arduino connection_files/17-1-2015_21-24-52.png" alt="" width="893" height="458"></p>
+<p>&nbsp;</p>
+<p>Arduino Mega 2560 with TFT shield and ESP8266 module. Arduino Mega 2560 is 5V and ESP8266 is 3.3V.</p>
+<p><img src="./ESP8266 WiFi module and 5V Arduino connection_files/20150103_003516_small.jpg" alt="" width="826" height="465"></p>
+<p><img src="./ESP8266 WiFi module and 5V Arduino connection_files/Untitled.jpg" alt="" width="792" height="444"></p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p><span style="color: #555555; font-family: Arial, Helvetica, Verdana, Tahoma, sans-serif; font-size: 15px; line-height: 24px; background-color: initial;">See more tutorials at&nbsp;</span><a style="cursor: pointer; font-family: Arial, Helvetica, Verdana, Tahoma, sans-serif; font-size: 15px; line-height: 24px; color: #1155cc !important; text-decoration: underline !important;" href="http://iot-playground.com/build" rel="alternate">​http://iot-playground.com/build​</a></p>
+<p>&nbsp;</p>
+<h1 style="line-height: 15.8079996109009px;">Buying guide</h1>
+<p style="font-size: 12.1599998474121px; line-height: 15.8079996109009px;">&nbsp;</p>
+<p style="font-size: 12.1599998474121px; line-height: 15.8079996109009px;">To support this site and EasyIoT framework development please buy in our store.</p>
+ 
+
+ 
+<div class="shopItemHolder"><div class="shopitemBorder"><div class="shopitemImage"><img src="./ESP8266 WiFi module and 5V Arduino connection_files/$_12.JPG" class="img-rounded shopImage"></div><h5 class="shopitemHeader">Arduino Mega 2560</h5><p>For bigger Arduino projects.</p><div class="shopitemaffholder"><div class="shopitemaff">&nbsp;<div class="pull_right"><a target="_blank" rel="nofollow" class="price" href="https://rover.ebay.com/rover/1/711-53200-19255-0/1?icep_ff3=2&amp;pub=5575120461&amp;toolid=10001&amp;campid=5337668238&amp;customid=&amp;icep_item=112157938577&amp;ipn=psmain&amp;icep_vectorid=229466&amp;kwid=902099&amp;mtid=824&amp;kw=lg"><img src="./ESP8266 WiFi module and 5V Arduino connection_files/ebay_ico.png"> $9.97</a><a target="_blank" rel="nofollow" class="btnaff" href="https://rover.ebay.com/rover/1/711-53200-19255-0/1?icep_ff3=2&amp;pub=5575120461&amp;toolid=10001&amp;campid=5337668238&amp;customid=&amp;icep_item=112157938577&amp;ipn=psmain&amp;icep_vectorid=229466&amp;kwid=902099&amp;mtid=824&amp;kw=lg" role="button">&nbsp;&nbsp;&gt; &gt;&nbsp;&nbsp;</a><img style="text-decoration:none;border:0;padding:0;margin:0;" src="./ESP8266 WiFi module and 5V Arduino connection_files/1"></div></div><div class="shopitemaff">&nbsp;<div class="pull_right"><a target="_blank" rel="nofollow" class="price" href="http://s.click.aliexpress.com/deep_link.htm?dl_target_url=https%3A%2F%2Fwww.aliexpress.com%2Fitem%2FMega-2560-CH340G-ATmega2560-16AU-Compatible-for-Arduino-Mega-2560%2F32517341214.html&amp;aff_short_key=BY7YzVz"><img src="./ESP8266 WiFi module and 5V Arduino connection_files/aliexpress_ico.png"> $6.99</a><a target="_blank" rel="nofollow" class="btnaff" href="http://s.click.aliexpress.com/deep_link.htm?dl_target_url=https%3A%2F%2Fwww.aliexpress.com%2Fitem%2FMega-2560-CH340G-ATmega2560-16AU-Compatible-for-Arduino-Mega-2560%2F32517341214.html&amp;aff_short_key=BY7YzVz" role="button">&nbsp;&nbsp;&gt; &gt;&nbsp;&nbsp;</a></div></div></div></div></div><div class="shopItemHolder"><div class="shopitemBorder"><div class="shopitemImage"><img src="./ESP8266 WiFi module and 5V Arduino connection_files/$_12(1).JPG" class="img-rounded shopImage"></div><h5 class="shopitemHeader">5V 16Mhz Arduino Pro Mini</h5><p>Small but powerful suitable for most DIY Arduino projects.</p><div class="shopitemaffholder"><div class="shopitemaff">&nbsp;<div class="pull_right"><a target="_blank" rel="nofollow" class="price" href="https://rover.ebay.com/rover/1/711-53200-19255-0/1?icep_ff3=2&amp;pub=5575120461&amp;toolid=10001&amp;campid=5337668238&amp;customid=&amp;icep_item=253077233488&amp;ipn=psmain&amp;icep_vectorid=229466&amp;kwid=902099&amp;mtid=824&amp;kw=lg"><img src="./ESP8266 WiFi module and 5V Arduino connection_files/ebay_ico.png"> $1.75</a><a target="_blank" rel="nofollow" class="btnaff" href="https://rover.ebay.com/rover/1/711-53200-19255-0/1?icep_ff3=2&amp;pub=5575120461&amp;toolid=10001&amp;campid=5337668238&amp;customid=&amp;icep_item=253077233488&amp;ipn=psmain&amp;icep_vectorid=229466&amp;kwid=902099&amp;mtid=824&amp;kw=lg" role="button">&nbsp;&nbsp;&gt; &gt;&nbsp;&nbsp;</a><img style="text-decoration:none;border:0;padding:0;margin:0;" src="./ESP8266 WiFi module and 5V Arduino connection_files/1(1)"></div></div><div class="shopitemaff">&nbsp;<div class="pull_right"><a target="_blank" rel="nofollow" class="price" href="http://s.click.aliexpress.com/deep_link.htm?dl_target_url=https%3A%2F%2Fwww.aliexpress.com%2Fitem%2F1pcs-ATMEGA328P-Pro-Mini-328-Mini-ATMEGA328-5V-16MHz-for-Arduino-new-Free-shipping%2F32655809087.html&amp;aff_short_key=BY7YzVz"><img src="./ESP8266 WiFi module and 5V Arduino connection_files/aliexpress_ico.png"> $1.99</a><a target="_blank" rel="nofollow" class="btnaff" href="http://s.click.aliexpress.com/deep_link.htm?dl_target_url=https%3A%2F%2Fwww.aliexpress.com%2Fitem%2F1pcs-ATMEGA328P-Pro-Mini-328-Mini-ATMEGA328-5V-16MHz-for-Arduino-new-Free-shipping%2F32655809087.html&amp;aff_short_key=BY7YzVz" role="button">&nbsp;&nbsp;&gt; &gt;&nbsp;&nbsp;</a></div></div></div></div></div><div class="shopItemHolder"><div class="shopitemBorder"><div class="shopitemImage"><img src="./ESP8266 WiFi module and 5V Arduino connection_files/$_1.JPG" class="img-rounded shopImage"></div><h5 class="shopitemHeader">10Pcs AMS1117-3.3 LM1117 3.3V 1A SOT-223 Voltage Regulator</h5><p>3.3V voltage regulator,</p><div class="shopitemaffholder"><div class="shopitemaff">&nbsp;<div class="pull_right"><a target="_blank" rel="nofollow" class="price" href="https://rover.ebay.com/rover/1/711-53200-19255-0/1?icep_ff3=2&amp;pub=5575120461&amp;toolid=10001&amp;campid=5337668238&amp;customid=&amp;icep_item=130750978645&amp;ipn=psmain&amp;icep_vectorid=229466&amp;kwid=902099&amp;mtid=824&amp;kw=lg"><img src="./ESP8266 WiFi module and 5V Arduino connection_files/ebay_ico.png"> $0.99</a><a target="_blank" rel="nofollow" class="btnaff" href="https://rover.ebay.com/rover/1/711-53200-19255-0/1?icep_ff3=2&amp;pub=5575120461&amp;toolid=10001&amp;campid=5337668238&amp;customid=&amp;icep_item=130750978645&amp;ipn=psmain&amp;icep_vectorid=229466&amp;kwid=902099&amp;mtid=824&amp;kw=lg" role="button">&nbsp;&nbsp;&gt; &gt;&nbsp;&nbsp;</a><img style="text-decoration:none;border:0;padding:0;margin:0;" src="./ESP8266 WiFi module and 5V Arduino connection_files/1(2)"></div></div><div class="shopitemaff">&nbsp;<div class="pull_right"><a target="_blank" rel="nofollow" class="price" href="http://s.click.aliexpress.com/deep_link.htm?dl_target_url=https%3A%2F%2Fwww.aliexpress.com%2Fitem%2F10pcs-AMS1117-3-3V-AMS1117-1117-3-3V-1A-Voltage-Regulator-LDO-SOT-223%2F32247336660.html&amp;aff_short_key=BY7YzVz"><img src="./ESP8266 WiFi module and 5V Arduino connection_files/aliexpress_ico.png"> $1.22</a><a target="_blank" rel="nofollow" class="btnaff" href="http://s.click.aliexpress.com/deep_link.htm?dl_target_url=https%3A%2F%2Fwww.aliexpress.com%2Fitem%2F10pcs-AMS1117-3-3V-AMS1117-1117-3-3V-1A-Voltage-Regulator-LDO-SOT-223%2F32247336660.html&amp;aff_short_key=BY7YzVz" role="button">&nbsp;&nbsp;&gt; &gt;&nbsp;&nbsp;</a></div></div></div></div></div><div class="shopItemHolder"><div class="shopitemBorder"><div class="shopitemImage"><img src="./ESP8266 WiFi module and 5V Arduino connection_files/$_1(1).JPG" class="img-rounded shopImage"></div><h5 class="shopitemHeader">100Pcs NPN Transistor TO-92 2N2222</h5><p>All purpose NPN transistor.</p><div class="shopitemaffholder"><div class="shopitemaff">&nbsp;<div class="pull_right"><a target="_blank" rel="nofollow" class="price" href="https://rover.ebay.com/rover/1/711-53200-19255-0/1?icep_ff3=2&amp;pub=5575120461&amp;toolid=10001&amp;campid=5337668238&amp;customid=&amp;icep_item=201415131979&amp;ipn=psmain&amp;icep_vectorid=229466&amp;kwid=902099&amp;mtid=824&amp;kw=lg"><img src="./ESP8266 WiFi module and 5V Arduino connection_files/ebay_ico.png"> $1.01</a><a target="_blank" rel="nofollow" class="btnaff" href="https://rover.ebay.com/rover/1/711-53200-19255-0/1?icep_ff3=2&amp;pub=5575120461&amp;toolid=10001&amp;campid=5337668238&amp;customid=&amp;icep_item=201415131979&amp;ipn=psmain&amp;icep_vectorid=229466&amp;kwid=902099&amp;mtid=824&amp;kw=lg" role="button">&nbsp;&nbsp;&gt; &gt;&nbsp;&nbsp;</a><img style="text-decoration:none;border:0;padding:0;margin:0;" src="./ESP8266 WiFi module and 5V Arduino connection_files/1(3)"></div></div><div class="shopitemaff">&nbsp;<div class="pull_right"><a target="_blank" rel="nofollow" class="price" href="http://s.click.aliexpress.com/deep_link.htm?dl_target_url=https%3A%2F%2Fwww.aliexpress.com%2Fitem%2F2n2222-to-92-small-power-triode%2F1206409208.html&amp;aff_short_key=BY7YzVz"><img src="./ESP8266 WiFi module and 5V Arduino connection_files/aliexpress_ico.png"> $0.90</a><a target="_blank" rel="nofollow" class="btnaff" href="http://s.click.aliexpress.com/deep_link.htm?dl_target_url=https%3A%2F%2Fwww.aliexpress.com%2Fitem%2F2n2222-to-92-small-power-triode%2F1206409208.html&amp;aff_short_key=BY7YzVz" role="button">&nbsp;&nbsp;&gt; &gt;&nbsp;&nbsp;</a></div></div></div></div></div><div class="shopItemHolder"><div class="shopitemBorder"><div class="shopitemImage"><img src="./ESP8266 WiFi module and 5V Arduino connection_files/$_12(2).JPG" class="img-rounded shopImage"></div><h5 class="shopitemHeader">400X 0.25w 1/4w Metal Film Resistor Pack Kit 1% 20 Value Each 20 Pcs 10 ~ 1M ohm</h5><p></p><div class="shopitemaffholder"><div class="shopitemaff">&nbsp;<div class="pull_right"><a target="_blank" rel="nofollow" class="price" href="https://rover.ebay.com/rover/1/711-53200-19255-0/1?icep_ff3=2&amp;pub=5575120461&amp;toolid=10001&amp;campid=5337668238&amp;customid=&amp;icep_item=191831781877&amp;ipn=psmain&amp;icep_vectorid=229466&amp;kwid=902099&amp;mtid=824&amp;kw=lg"><img src="./ESP8266 WiFi module and 5V Arduino connection_files/ebay_ico.png"> $1.88</a><a target="_blank" rel="nofollow" class="btnaff" href="https://rover.ebay.com/rover/1/711-53200-19255-0/1?icep_ff3=2&amp;pub=5575120461&amp;toolid=10001&amp;campid=5337668238&amp;customid=&amp;icep_item=191831781877&amp;ipn=psmain&amp;icep_vectorid=229466&amp;kwid=902099&amp;mtid=824&amp;kw=lg" role="button">&nbsp;&nbsp;&gt; &gt;&nbsp;&nbsp;</a><img style="text-decoration:none;border:0;padding:0;margin:0;" src="./ESP8266 WiFi module and 5V Arduino connection_files/1(4)"></div></div><div class="shopitemaff">&nbsp;<div class="pull_right"><a target="_blank" rel="nofollow" class="price" href="http://s.click.aliexpress.com/deep_link.htm?dl_target_url=https%3A%2F%2Fwww.aliexpress.com%2Fitem%2F400PCS-lot-1-4W-20valuesX20pcs-400pcs-Metal-Film-Resistor-Kit-0R-100R-Resistor-Pack-0-25W%2F32284028003.html&amp;aff_short_key=BY7YzVz"><img src="./ESP8266 WiFi module and 5V Arduino connection_files/aliexpress_ico.png"> $5.50</a><a target="_blank" rel="nofollow" class="btnaff" href="http://s.click.aliexpress.com/deep_link.htm?dl_target_url=https%3A%2F%2Fwww.aliexpress.com%2Fitem%2F400PCS-lot-1-4W-20valuesX20pcs-400pcs-Metal-Film-Resistor-Kit-0R-100R-Resistor-Pack-0-25W%2F32284028003.html&amp;aff_short_key=BY7YzVz" role="button">&nbsp;&nbsp;&gt; &gt;&nbsp;&nbsp;</a></div></div></div></div></div><div class="shopItemHolder"><div class="shopitemBorder"><div class="shopitemImage"><img src="./ESP8266 WiFi module and 5V Arduino connection_files/$_1(2).JPG" class="img-rounded shopImage"></div><h5 class="shopitemHeader">210Pcs 25 Value 0.1uF-220uF Electrolytic Capacitors Assortment Kit Set</h5><p></p><div class="shopitemaffholder"><div class="shopitemaff">&nbsp;<div class="pull_right"><a target="_blank" rel="nofollow" class="price" href="https://rover.ebay.com/rover/1/711-53200-19255-0/1?icep_ff3=2&amp;pub=5575120461&amp;toolid=10001&amp;campid=5337668238&amp;customid=&amp;icep_item=321227646030&amp;ipn=psmain&amp;icep_vectorid=229466&amp;kwid=902099&amp;mtid=824&amp;kw=lg"><img src="./ESP8266 WiFi module and 5V Arduino connection_files/ebay_ico.png"> $3.36</a><a target="_blank" rel="nofollow" class="btnaff" href="https://rover.ebay.com/rover/1/711-53200-19255-0/1?icep_ff3=2&amp;pub=5575120461&amp;toolid=10001&amp;campid=5337668238&amp;customid=&amp;icep_item=321227646030&amp;ipn=psmain&amp;icep_vectorid=229466&amp;kwid=902099&amp;mtid=824&amp;kw=lg" role="button">&nbsp;&nbsp;&gt; &gt;&nbsp;&nbsp;</a><img style="text-decoration:none;border:0;padding:0;margin:0;" src="./ESP8266 WiFi module and 5V Arduino connection_files/1(5)"></div></div><div class="shopitemaff">&nbsp;<div class="pull_right"><a target="_blank" rel="nofollow" class="price" href="http://s.click.aliexpress.com/deep_link.htm?dl_target_url=https%3A%2F%2Fwww.aliexpress.com%2Fitem%2FFree-shipping-230Pcs-23-Values-0-1uF-220uF-Electrolytic-Capacitors-Assortment-Kit-Set%2F32698231186.html&amp;aff_short_key=BY7YzVz"><img src="./ESP8266 WiFi module and 5V Arduino connection_files/aliexpress_ico.png"> $6.52</a><a target="_blank" rel="nofollow" class="btnaff" href="http://s.click.aliexpress.com/deep_link.htm?dl_target_url=https%3A%2F%2Fwww.aliexpress.com%2Fitem%2FFree-shipping-230Pcs-23-Values-0-1uF-220uF-Electrolytic-Capacitors-Assortment-Kit-Set%2F32698231186.html&amp;aff_short_key=BY7YzVz" role="button">&nbsp;&nbsp;&gt; &gt;&nbsp;&nbsp;</a></div></div></div></div></div><div class="shopItemHolder"><div class="shopitemBorder"><div class="shopitemImage"><img src="./ESP8266 WiFi module and 5V Arduino connection_files/$_57.JPG" class="img-rounded shopImage"></div><h5 class="shopitemHeader">FT232RL FTDI USB to TTL Serial Adapter 5V, 3.3V</h5><p>FT232RL FTDI USB for Arduino or ESP8266 programming. Support 5V and 3.3V</p><div class="shopitemaffholder"><div class="shopitemaff">&nbsp;<div class="pull_right"><a target="_blank" rel="nofollow" class="price" href="https://rover.ebay.com/rover/1/711-53200-19255-0/1?icep_ff3=2&amp;pub=5575120461&amp;toolid=10001&amp;campid=5337668238&amp;customid=&amp;icep_item=231210836823&amp;ipn=psmain&amp;icep_vectorid=229466&amp;kwid=902099&amp;mtid=824&amp;kw=lg"><img src="./ESP8266 WiFi module and 5V Arduino connection_files/ebay_ico.png"> $2.59</a><a target="_blank" rel="nofollow" class="btnaff" href="https://rover.ebay.com/rover/1/711-53200-19255-0/1?icep_ff3=2&amp;pub=5575120461&amp;toolid=10001&amp;campid=5337668238&amp;customid=&amp;icep_item=231210836823&amp;ipn=psmain&amp;icep_vectorid=229466&amp;kwid=902099&amp;mtid=824&amp;kw=lg" role="button">&nbsp;&nbsp;&gt; &gt;&nbsp;&nbsp;</a><img style="text-decoration:none;border:0;padding:0;margin:0;" src="./ESP8266 WiFi module and 5V Arduino connection_files/1(6)"></div></div><div class="shopitemaff">&nbsp;<div class="pull_right"><a target="_blank" rel="nofollow" class="price" href="http://s.click.aliexpress.com/deep_link.htm?dl_target_url=https%3A%2F%2Fwww.aliexpress.com%2Fitem%2FFT232RL-FTDI-USB-to-TTL-Serial-Adapter-Module-for-Arduino-Mini-Port-3-3V-5V-Free%2F32422482038.html&amp;aff_short_key=BY7YzVz"><img src="./ESP8266 WiFi module and 5V Arduino connection_files/aliexpress_ico.png"> $3.99</a><a target="_blank" rel="nofollow" class="btnaff" href="http://s.click.aliexpress.com/deep_link.htm?dl_target_url=https%3A%2F%2Fwww.aliexpress.com%2Fitem%2FFT232RL-FTDI-USB-to-TTL-Serial-Adapter-Module-for-Arduino-Mini-Port-3-3V-5V-Free%2F32422482038.html&amp;aff_short_key=BY7YzVz" role="button">&nbsp;&nbsp;&gt; &gt;&nbsp;&nbsp;</a></div></div></div></div></div><div class="shopItemHolder"><div class="shopitemBorder"><div class="shopitemImage"><img src="./ESP8266 WiFi module and 5V Arduino connection_files/$_12(3).JPG" class="img-rounded shopImage"></div><h5 class="shopitemHeader">5V 2A Charger Micro USB</h5><p>For Raspberry Pi or sensor modules, cheap and easy power solution.</p><div class="shopitemaffholder"><div class="shopitemaff">&nbsp;<div class="pull_right"><a target="_blank" rel="nofollow" class="price" href="https://rover.ebay.com/rover/1/711-53200-19255-0/1?icep_ff3=2&amp;pub=5575120461&amp;toolid=10001&amp;campid=5337668238&amp;customid=&amp;icep_item=121928136625&amp;ipn=psmain&amp;icep_vectorid=229466&amp;kwid=902099&amp;mtid=824&amp;kw=lg"><img src="./ESP8266 WiFi module and 5V Arduino connection_files/ebay_ico.png"> $2.43</a><a target="_blank" rel="nofollow" class="btnaff" href="https://rover.ebay.com/rover/1/711-53200-19255-0/1?icep_ff3=2&amp;pub=5575120461&amp;toolid=10001&amp;campid=5337668238&amp;customid=&amp;icep_item=121928136625&amp;ipn=psmain&amp;icep_vectorid=229466&amp;kwid=902099&amp;mtid=824&amp;kw=lg" role="button">&nbsp;&nbsp;&gt; &gt;&nbsp;&nbsp;</a><img style="text-decoration:none;border:0;padding:0;margin:0;" src="./ESP8266 WiFi module and 5V Arduino connection_files/1(7)"></div></div><div class="shopitemaff">&nbsp;<div class="pull_right"><a target="_blank" rel="nofollow" class="price" href="http://s.click.aliexpress.com/deep_link.htm?dl_target_url=https%3A%2F%2Fwww.aliexpress.com%2Fitem%2F2-in-1-Genuine-original-2A-EU-Plug-Wall-Charger-Micro-USB-Charger-Cable-For-Samsung%2F32352259211.html&amp;aff_short_key=BY7YzVz"><img src="./ESP8266 WiFi module and 5V Arduino connection_files/aliexpress_ico.png"> $3.40</a><a target="_blank" rel="nofollow" class="btnaff" href="http://s.click.aliexpress.com/deep_link.htm?dl_target_url=https%3A%2F%2Fwww.aliexpress.com%2Fitem%2F2-in-1-Genuine-original-2A-EU-Plug-Wall-Charger-Micro-USB-Charger-Cable-For-Samsung%2F32352259211.html&amp;aff_short_key=BY7YzVz" role="button">&nbsp;&nbsp;&gt; &gt;&nbsp;&nbsp;</a></div></div></div></div></div><div class="shopItemHolder"><div class="shopitemBorder"><div class="shopitemImage"><img src="./ESP8266 WiFi module and 5V Arduino connection_files/$_1(3).JPG" class="img-rounded shopImage"></div><h5 class="shopitemHeader">ESP8266 ESP-01 Serial WIFI Wireless Transceiver Module</h5><p>ESP8266 Serial WIFI Wireless Transceiver Module</p><div class="shopitemaffholder"><div class="shopitemaff">&nbsp;<div class="pull_right"><a target="_blank" rel="nofollow" class="price" href="https://rover.ebay.com/rover/1/711-53200-19255-0/1?icep_ff3=2&amp;pub=5575120461&amp;toolid=10001&amp;campid=5337668238&amp;customid=&amp;icep_item=201501780189&amp;ipn=psmain&amp;icep_vectorid=229466&amp;kwid=902099&amp;mtid=824&amp;kw=lg"><img src="./ESP8266 WiFi module and 5V Arduino connection_files/ebay_ico.png"> $2.11</a><a target="_blank" rel="nofollow" class="btnaff" href="https://rover.ebay.com/rover/1/711-53200-19255-0/1?icep_ff3=2&amp;pub=5575120461&amp;toolid=10001&amp;campid=5337668238&amp;customid=&amp;icep_item=201501780189&amp;ipn=psmain&amp;icep_vectorid=229466&amp;kwid=902099&amp;mtid=824&amp;kw=lg" role="button">&nbsp;&nbsp;&gt; &gt;&nbsp;&nbsp;</a><img style="text-decoration:none;border:0;padding:0;margin:0;" src="./ESP8266 WiFi module and 5V Arduino connection_files/1(8)"></div></div><div class="shopitemaff">&nbsp;<div class="pull_right"><a target="_blank" rel="nofollow" class="price" href="http://s.click.aliexpress.com/deep_link.htm?dl_target_url=https%3A%2F%2Fwww.aliexpress.com%2Fitem%2FFree-shipping-ESP8266-serial-port-WIFI-Wireless-module-WIF-transceiver-wireless-module-ESP-01%2F32397903869.html&amp;aff_short_key=BY7YzVz"><img src="./ESP8266 WiFi module and 5V Arduino connection_files/aliexpress_ico.png"> $17.00</a><a target="_blank" rel="nofollow" class="btnaff" href="http://s.click.aliexpress.com/deep_link.htm?dl_target_url=https%3A%2F%2Fwww.aliexpress.com%2Fitem%2FFree-shipping-ESP8266-serial-port-WIFI-Wireless-module-WIF-transceiver-wireless-module-ESP-01%2F32397903869.html&amp;aff_short_key=BY7YzVz" role="button">&nbsp;&nbsp;&gt; &gt;&nbsp;&nbsp;</a></div></div></div></div></div><div class="shopItemHolder"><div class="shopitemBorder"><div class="shopitemImage"><img src="./ESP8266 WiFi module and 5V Arduino connection_files/$_1(4).JPG" class="img-rounded shopImage"></div><h5 class="shopitemHeader">ESP8266 ESP-03 Serial WIFI Wireless Transceiver Module</h5><p>ESP8266 serial WIFI model ESP-03</p><div class="shopitemaffholder"><div class="shopitemaff">&nbsp;<div class="pull_right"><a target="_blank" rel="nofollow" class="price" href="https://rover.ebay.com/rover/1/711-53200-19255-0/1?icep_ff3=2&amp;pub=5575120461&amp;toolid=10001&amp;campid=5337668238&amp;customid=&amp;icep_item=381374501949&amp;ipn=psmain&amp;icep_vectorid=229466&amp;kwid=902099&amp;mtid=824&amp;kw=lg"><img src="./ESP8266 WiFi module and 5V Arduino connection_files/ebay_ico.png"> $2.07</a><a target="_blank" rel="nofollow" class="btnaff" href="https://rover.ebay.com/rover/1/711-53200-19255-0/1?icep_ff3=2&amp;pub=5575120461&amp;toolid=10001&amp;campid=5337668238&amp;customid=&amp;icep_item=381374501949&amp;ipn=psmain&amp;icep_vectorid=229466&amp;kwid=902099&amp;mtid=824&amp;kw=lg" role="button">&nbsp;&nbsp;&gt; &gt;&nbsp;&nbsp;</a><img style="text-decoration:none;border:0;padding:0;margin:0;" src="./ESP8266 WiFi module and 5V Arduino connection_files/1(9)"></div></div><div class="shopitemaff">&nbsp;<div class="pull_right"><a target="_blank" rel="nofollow" class="price" href="http://s.click.aliexpress.com/deep_link.htm?dl_target_url=https%3A%2F%2Fwww.aliexpress.com%2Fitem%2FESP8266-serial-WIFI-model-ESP-03-Authenticity-Guaranteed-ESP03-free-shipping%2F32713916387.html&amp;aff_short_key=BY7YzVz"><img src="./ESP8266 WiFi module and 5V Arduino connection_files/aliexpress_ico.png"> $2.15</a><a target="_blank" rel="nofollow" class="btnaff" href="http://s.click.aliexpress.com/deep_link.htm?dl_target_url=https%3A%2F%2Fwww.aliexpress.com%2Fitem%2FESP8266-serial-WIFI-model-ESP-03-Authenticity-Guaranteed-ESP03-free-shipping%2F32713916387.html&amp;aff_short_key=BY7YzVz" role="button">&nbsp;&nbsp;&gt; &gt;&nbsp;&nbsp;</a></div></div></div></div></div><div class="shopItemHolder"><div class="shopitemBorder"><div class="shopitemImage"><img src="./ESP8266 WiFi module and 5V Arduino connection_files/$_1(5).JPG" class="img-rounded shopImage"></div><h5 class="shopitemHeader">ESP8266 ESP-12 Serial WIFI Wireless Transceiver Module</h5><p>ESP8266 serial Port WIFI wireless module ESP-12</p><div class="shopitemaffholder"><div class="shopitemaff">&nbsp;<div class="pull_right"><a target="_blank" rel="nofollow" class="price" href="https://rover.ebay.com/rover/1/711-53200-19255-0/1?icep_ff3=2&amp;pub=5575120461&amp;toolid=10001&amp;campid=5337668238&amp;customid=&amp;icep_item=381374534484&amp;ipn=psmain&amp;icep_vectorid=229466&amp;kwid=902099&amp;mtid=824&amp;kw=lg"><img src="./ESP8266 WiFi module and 5V Arduino connection_files/ebay_ico.png"> $2.06</a><a target="_blank" rel="nofollow" class="btnaff" href="https://rover.ebay.com/rover/1/711-53200-19255-0/1?icep_ff3=2&amp;pub=5575120461&amp;toolid=10001&amp;campid=5337668238&amp;customid=&amp;icep_item=381374534484&amp;ipn=psmain&amp;icep_vectorid=229466&amp;kwid=902099&amp;mtid=824&amp;kw=lg" role="button">&nbsp;&nbsp;&gt; &gt;&nbsp;&nbsp;</a><img style="text-decoration:none;border:0;padding:0;margin:0;" src="./ESP8266 WiFi module and 5V Arduino connection_files/1(10)"></div></div><div class="shopitemaff">&nbsp;<div class="pull_right"><a target="_blank" rel="nofollow" class="price" href="http://s.click.aliexpress.com/deep_link.htm?dl_target_url=https%3A%2F%2Fwww.aliexpress.com%2Fitem%2FNew-version-ESP-12E-replace-ESP-12-ESP8266-remote-serial-Port-WIFI-wireless-module%2F32339917567.html&amp;aff_short_key=BY7YzVz"><img src="./ESP8266 WiFi module and 5V Arduino connection_files/aliexpress_ico.png"> $1.75</a><a target="_blank" rel="nofollow" class="btnaff" href="http://s.click.aliexpress.com/deep_link.htm?dl_target_url=https%3A%2F%2Fwww.aliexpress.com%2Fitem%2FNew-version-ESP-12E-replace-ESP-12-ESP8266-remote-serial-Port-WIFI-wireless-module%2F32339917567.html&amp;aff_short_key=BY7YzVz" role="button">&nbsp;&nbsp;&gt; &gt;&nbsp;&nbsp;</a></div></div></div></div></div><div class="shopItemHolder"><div class="shopitemBorder"><div class="shopitemImage"><img src="./ESP8266 WiFi module and 5V Arduino connection_files/$_1(6).JPG" class="img-rounded shopImage"></div><h5 class="shopitemHeader">ESP8266 ESP-05 Serial WIFI Wireless Transceiver Module</h5><p>ESP8266 ESP-05 Serial WIFI Wireless Transceiver Module</p><div class="shopitemaffholder"><div class="shopitemaff">&nbsp;<div class="pull_right"><a target="_blank" rel="nofollow" class="price" href="https://rover.ebay.com/rover/1/711-53200-19255-0/1?icep_ff3=2&amp;pub=5575120461&amp;toolid=10001&amp;campid=5337668238&amp;customid=&amp;icep_item=181776813702&amp;ipn=psmain&amp;icep_vectorid=229466&amp;kwid=902099&amp;mtid=824&amp;kw=lg"><img src="./ESP8266 WiFi module and 5V Arduino connection_files/ebay_ico.png"> $1.88</a><a target="_blank" rel="nofollow" class="btnaff" href="https://rover.ebay.com/rover/1/711-53200-19255-0/1?icep_ff3=2&amp;pub=5575120461&amp;toolid=10001&amp;campid=5337668238&amp;customid=&amp;icep_item=181776813702&amp;ipn=psmain&amp;icep_vectorid=229466&amp;kwid=902099&amp;mtid=824&amp;kw=lg" role="button">&nbsp;&nbsp;&gt; &gt;&nbsp;&nbsp;</a><img style="text-decoration:none;border:0;padding:0;margin:0;" src="./ESP8266 WiFi module and 5V Arduino connection_files/1(11)"></div></div></div></div></div> 
+
+ 
+
+<p style="font-size: 12.1599998474121px; line-height: 15.8079996109009px;">&nbsp;</p>	</section>
+  
+  <!-- footer -->
+    <!-- //footer -->
+
+			<hr class="divider-vertical">
+<ul class="pager pagenav">
+	<li class="previous">
+		<a class="hasTooltip" title="" aria-label="Previous article: ESP8266 WiFi water leak (rain, soil moisture) sensor" href="https://iot-playground.com/blog/2-uncategorised/18-esp8266-wifi-leak-rain-soil-moisture-sensor" rel="prev" data-original-title="ESP8266 WiFi water leak (rain, soil moisture) sensor">
+			<span class="icon-chevron-left" aria-hidden="true"></span> <span aria-hidden="true">Prev</span>		</a>
+	</li>
+	<li class="next">
+		<a class="hasTooltip" title="" aria-label="Next article: ESP8266 WiFi relay switch" href="https://iot-playground.com/blog/2-uncategorised/16-esp8266-wifi-relay-switch" rel="next" data-original-title="ESP8266 WiFi relay switch">
+			<span aria-hidden="true">Next</span> <span class="icon-chevron-right" aria-hidden="true"></span>		</a>
+	</li>
+</ul>
+	
+	
+	</article>
+<!-- //Article -->
+
+
+<script type="text/javascript">
+<!--
+var jcomments=new JComments(17, 'com_content','/component/jcomments/');
+jcomments.setList('comments-list');
+//-->
+</script>
+<div id="jc">
+<div id="comments"><h4>Comments <a class="rss" href="https://iot-playground.com/component/jcomments/feed/com_content/17" title="RSS feed for comments to this post" target="_blank">&nbsp;</a><a class="refresh" href="https://iot-playground.com/blog/2-uncategorised/17-esp8266-wifi-module-and-5v-arduino-connection#" title="Refresh comments list" onclick="jcomments.showPage(17,&#39;com_content&#39;,0);return false;">&nbsp;</a></h4>
+<div id="comments-list" class="comments-list">
+	<div class="even" id="comment-item-303"><div class="rbox">
+<div class="comment-box">
+<a class="comment-anchor" href="https://iot-playground.com/2-uncategorised/17-esp8266-wifi-module-and-5v-arduino-connection#comment-303" id="comment-303">#9</a>
+<span class="comment-author">Super User</span>
+<span class="comment-date">2015-07-15 16:14</span>
+<div class="comment-body" id="comment-body-303"><span class="quote">Quoting ChrizZz:</span><blockquote><div>Hi great work - but which Pin is the "Arduino_DO" ?<br>Thanks in Advance.</div></blockquote><br><br>Any Arduino DO pin. If you have more questions please join community forum.</div>
+</div><div class="clear"></div>
+</div>
+</div>
+	<div class="odd" id="comment-item-300"><div class="rbox">
+<div class="comment-box">
+<a class="comment-anchor" href="https://iot-playground.com/2-uncategorised/17-esp8266-wifi-module-and-5v-arduino-connection#comment-300" id="comment-300">#8</a>
+<span class="comment-author">ChrizZz</span>
+<span class="comment-date">2015-07-14 17:09</span>
+<div class="comment-body" id="comment-body-300">Hi, great work - but which Pin is meant with "Arduion_DO" ?<br>Thank you in advance.</div>
+</div><div class="clear"></div>
+</div>
+</div>
+	<div class="even" id="comment-item-285"><div class="rbox">
+<div class="comment-box">
+<a class="comment-anchor" href="https://iot-playground.com/2-uncategorised/17-esp8266-wifi-module-and-5v-arduino-connection#comment-285" id="comment-285">#7</a>
+<span class="comment-author">Super User</span>
+<span class="comment-date">2015-06-30 16:28</span>
+<div class="comment-body" id="comment-body-285"><span class="quote">Quoting Niall:</span><blockquote><div>Hi,<br><br>Thanks for very helpful post.<br><br>I have powered ESP8266 directly from Arduino Mega 3.3v pin. Also using Adadruit tft touch shield.<br>Everything seems to work fine for about three web requests. Then Arduino hangs and I need to reset.<br>I've noticed the Arduino gets hot around the power connector (I'm using 12V psu for Vin).<br>Does this mean I need to make the regulator with AMS1117 that you have described above?<br>Thanks.</div></blockquote><br><br>Please join community forum and ask questions there. Maybe some other user has similar problem.</div>
+</div><div class="clear"></div>
+</div>
+</div>
+	<div class="odd" id="comment-item-278"><div class="rbox">
+<div class="comment-box">
+<a class="comment-anchor" href="https://iot-playground.com/2-uncategorised/17-esp8266-wifi-module-and-5v-arduino-connection#comment-278" id="comment-278">#6</a>
+<span class="comment-author">Niall</span>
+<span class="comment-date">2015-06-28 09:17</span>
+<div class="comment-body" id="comment-body-278">Hi,<br><br>Thanks for very helpful post.<br><br>I have powered ESP8266 directly from Arduino Mega 3.3v pin. Also using Adadruit tft touch shield.<br>Everything seems to work fine for about three web requests. Then Arduino hangs and I need to reset.<br>I've noticed the Arduino gets hot around the power connector (I'm using 12V psu for Vin).<br>Does this mean I need to make the regulator with AMS1117 that you have described above?<br>Thanks.</div>
+</div><div class="clear"></div>
+</div>
+</div>
+	<div class="even" id="comment-item-166"><div class="rbox">
+<div class="comment-box">
+<a class="comment-anchor" href="https://iot-playground.com/2-uncategorised/17-esp8266-wifi-module-and-5v-arduino-connection#comment-166" id="comment-166">#5</a>
+<span class="comment-author">Super User</span>
+<span class="comment-date">2015-04-12 23:45</span>
+<div class="comment-body" id="comment-body-166"><span class="quote">Quoting rinozen:</span><blockquote><div>hi.. about 3.3v to 5v tx/rx schematic.. there are only positif supply on 3,3v and 5v.. where is the ground connection? im confusing.. plz help me.. :'(</div></blockquote><br><br>Ground is common to 3.3V and 5V and connected to GND pin on ESP.</div>
+</div><div class="clear"></div>
+</div>
+</div>
+	<div class="odd" id="comment-item-165"><div class="rbox">
+<div class="comment-box">
+<a class="comment-anchor" href="https://iot-playground.com/2-uncategorised/17-esp8266-wifi-module-and-5v-arduino-connection#comment-165" id="comment-165">#4</a>
+<span class="comment-author">rinozen</span>
+<span class="comment-date">2015-04-11 15:26</span>
+<div class="comment-body" id="comment-body-165">hi.. about 3.3v to 5v tx/rx schematic.. there are only positif supply on 3,3v and 5v.. where is the ground connection? im confusing.. plz help me.. :'(</div>
+</div><div class="clear"></div>
+</div>
+</div>
+	<div class="even" id="comment-item-153"><div class="rbox">
+<div class="comment-box">
+<span class="comments-vote">
+	<span id="comment-vote-holder-153">
+<span class="vote-good">+1</span>
+	</span>
+</span>
+<a class="comment-anchor" href="https://iot-playground.com/2-uncategorised/17-esp8266-wifi-module-and-5v-arduino-connection#comment-153" id="comment-153">#3</a>
+<span class="comment-author">Super User</span>
+<span class="comment-date">2015-04-04 09:14</span>
+<div class="comment-body" id="comment-body-153"><span class="quote">Quoting Carlo:</span><blockquote><div>Hi, great work but I miss the part where pair the ESP8266 to my Access Point to join the network where my raspberry is linked to.</div></blockquote><br>This is described in other articles.</div>
+</div><div class="clear"></div>
+</div>
+</div>
+	<div class="odd" id="comment-item-151"><div class="rbox">
+<div class="comment-box">
+<a class="comment-anchor" href="https://iot-playground.com/2-uncategorised/17-esp8266-wifi-module-and-5v-arduino-connection#comment-151" id="comment-151">#2</a>
+<span class="comment-author">Carlo</span>
+<span class="comment-date">2015-04-03 23:07</span>
+<div class="comment-body" id="comment-body-151">Hi, great work but I miss the part where pair the ESP8266 to my Access Point to join the network where my raspberry is linked to.</div>
+</div><div class="clear"></div>
+</div>
+</div>
+	<div class="even" id="comment-item-102"><div class="rbox">
+<div class="comment-box">
+<span class="comments-vote">
+	<span id="comment-vote-holder-102">
+<span class="vote-good">+1</span>
+	</span>
+</span>
+<a class="comment-anchor" href="https://iot-playground.com/2-uncategorised/17-esp8266-wifi-module-and-5v-arduino-connection#comment-102" id="comment-102">#1</a>
+<span class="comment-author">DarioCdj</span>
+<span class="comment-date">2015-02-23 14:55</span>
+<div class="comment-body" id="comment-body-102">It works also without 2n2222</div>
+</div><div class="clear"></div>
+</div>
+</div>
+</div>
+<div id="comments-list-footer"><a class="refresh" href="https://iot-playground.com/blog/2-uncategorised/17-esp8266-wifi-module-and-5v-arduino-connection#" title="Refresh comments list" onclick="jcomments.showPage(17,&#39;com_content&#39;,0);return false;">Refresh comments list</a><br><a class="rss" href="https://iot-playground.com/component/jcomments/feed/com_content/17" title="RSS feed for comments to this post" target="_blank">RSS feed for comments to this post</a></div>
+</div>
+<a id="addcomments" href="https://iot-playground.com/blog/2-uncategorised/17-esp8266-wifi-module-and-5v-arduino-connection#addcomments"></a>
+<p class="message">You have no rights to post comments</p>
+<div id="comments-footer" align="center"><a href="http://www.joomlatune.com/" title="JComments" target="_blank">JComments</a></div>
+<script type="text/javascript">
+<!--
+jcomments.setAntiCache(1,0,0);
+//-->
+</script> 
+</div></div>
+
+
+		</div>
+		<!-- //MAIN CONTENT -->
+
+		<!-- SIDEBAR 1 -->
+		<div class="t3-sidebar t3-sidebar-1 col-xs-6  col-md-3  col-md-pull-6 ">
+			<div class="t3-module module " id="Mod105"><div class="module-inner"><div class="module-ct">
+
+<div class="custom">
+	 
+
+ 
+<script async="" src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script> 
+<!-- iot_left_slim_x --> 
+<ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-8117731653118920" data-ad-slot="9268111099" data-ad-format="vertical"></ins> 
+<script> 
+(adsbygoogle = window.adsbygoogle || []).push({}); 
+</script> 
+
+ 
+</div>
+</div></div></div><div class="t3-module module " id="Mod106"><div class="module-inner"><div class="module-ct">
+
+<div class="custom">
+	 
+
+ 
+<script async="" src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script> 
+<!-- iot_left_slim1_x --> 
+<ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-8117731653118920" data-ad-slot="4837911495" data-ad-format="vertical"></ins> 
+<script> 
+(adsbygoogle = window.adsbygoogle || []).push({}); 
+</script> 
+
+ 
+</div>
+</div></div></div>
+		</div>
+		<!-- //SIDEBAR 1 -->
+	
+		<!-- SIDEBAR 2 -->
+		<div class="t3-sidebar t3-sidebar-2 col-xs-6  col-md-3 ">
+			<div class="t3-module module " id="Mod104"><div class="module-inner"><div class="module-ct">
+
+<div class="custom">
+	 
+
+ 
+<script async="" src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script> 
+<!-- iot_square_1 --> 
+<ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-8117731653118920" data-ad-slot="6175043896" data-ad-format="auto"></ins> 
+<script> 
+(adsbygoogle = window.adsbygoogle || []).push({}); 
+</script> 
+
+ 
+</div>
+</div></div></div><div class="t3-module module " id="Mod96"><div class="module-inner"><div class="module-ct"><div class="tagspopular">
+	<ul>
+		<li>		<a href="https://iot-playground.com/component/tags/tag/esp8266">
+			ESP8266</a>
+			</li>
+		<li>		<a href="https://iot-playground.com/component/tags/tag/easyiot-cloud">
+			EasyIoT Cloud</a>
+			</li>
+		<li>		<a href="https://iot-playground.com/component/tags/tag/esp8266-arduino-ide">
+			ESP8266 Arduino IDE</a>
+			</li>
+		<li>		<a href="https://iot-playground.com/component/tags/tag/easyiot-server">
+			EasyIoT server</a>
+			</li>
+		<li>		<a href="https://iot-playground.com/component/tags/tag/relay-switch">
+			relay switch</a>
+			</li>
+		<li>		<a href="https://iot-playground.com/component/tags/tag/arduino">
+			Arduino</a>
+			</li>
+		<li>		<a href="https://iot-playground.com/component/tags/tag/raspberry-pi">
+			Raspberry Pi</a>
+			</li>
+		<li>		<a href="https://iot-playground.com/component/tags/tag/sensor">
+			sensor</a>
+			</li>
+		<li>		<a href="https://iot-playground.com/component/tags/tag/mqtt">
+			MQTT</a>
+			</li>
+		<li>		<a href="https://iot-playground.com/component/tags/tag/door-window-sensor">
+			door/window sensor</a>
+			</li>
+		</ul>
+</div>
+</div></div></div><div class="t3-module module " id="Mod97"><div class="module-inner"><h3 class="module-title "><span>Login</span></h3><div class="module-ct">	<form action="https://iot-playground.com/blog" method="post" id="login-form">
+				<fieldset class="userdata">
+			<div id="form-login-username" class="form-group">
+									<div class="input-group">
+						<span class="input-group-addon">
+							<i class="fa fa-user tip" title="Username"></i>
+						</span>
+						<input id="modlgn-username" type="text" name="username" class="input form-control" tabindex="0" size="18" placeholder="Username">
+					</div>
+							</div>
+			<div id="form-login-password" class="form-group">
+								<div class="input-group">
+						<span class="input-group-addon">
+							<i class="fa fa-lock tip" title="Password"></i>
+						</span>
+					<input id="modlgn-passwd" type="password" name="password" class="input form-control" tabindex="0" size="18" placeholder="Password">
+				</div>
+						</div>
+					
+							<div id="form-login-remember" class="form-group">
+					<div class="checkbox">
+					<label for="modlgn-remember">
+						<input id="modlgn-remember" type="checkbox" name="remember" class="input" value="yes"> Remember Me					</label>
+					</div>
+				</div>
+						<div class="control-group">
+				<input type="submit" name="Submit" class="btn btn-primary" value="Log in">
+			</div>
+
+						<ul class="unstyled">
+								<li>
+					<a href="https://iot-playground.com/component/users/?view=registration&amp;Itemid=101">
+						Create an account <span class="fa fa-arrow-right"></span></a>
+				</li>
+								<li>
+					<a href="https://iot-playground.com/component/users/?view=remind&amp;Itemid=101">
+						Forgot your username?</a>
+				</li>
+				<li>
+					<a href="https://iot-playground.com/component/users/?view=reset&amp;Itemid=101">Forgot your password?</a>
+				</li>
+			</ul>
+
+			<input type="hidden" name="option" value="com_users">
+			<input type="hidden" name="task" value="user.login">
+			<input type="hidden" name="return" value="aHR0cHM6Ly9pb3QtcGxheWdyb3VuZC5jb20vYmxvZy8yLXVuY2F0ZWdvcmlzZWQvMTctZXNwODI2Ni13aWZpLW1vZHVsZS1hbmQtNXYtYXJkdWluby1jb25uZWN0aW9u">
+			<input type="hidden" name="1750dbbf79d6f05fb1cec905264acb7f" value="1">		</fieldset>
+			</form>
+</div></div></div><div class="t3-module module " id="Mod88"><div class="module-inner"><h3 class="module-title "><span>Forum latest</span></h3><div class="module-ct"><div class=" klatest ">
+	<ul class="klatest-items">
+					<li class="klatest-item">
+<ul class="klatest-itemdetails">
+<li class="klatest-topicicon">
+	<a href="https://iot-playground.com/forum/my-project/964-gateway-for-echo-dot-and-easyiot-server/unread" title="View New Posts in Topic &#39;Gateway for Echo dot and EasyIOT Server&#39;" rel="nofollow"><img src="./ESP8266 WiFi module and 5V Arduino connection_files/default.png" alt="emo"></a></li>
+
+<li class="klatest-subject">
+	<a href="https://iot-playground.com/forum/my-project/964-gateway-for-echo-dot-and-easyiot-server/unread" rel="follow">Gateway for Echo dot and EasyIOT Server</a></li>
+<li class="klatest-cat">In <a href="https://iot-playground.com/forum/community-projects" title="View Category &#39;Community projects&#39;" rel="follow">Community projects</a> / <a href="https://iot-playground.com/forum/my-project" title="View Category &#39;My project&#39;" rel="follow">My project</a></li>
+<li class="klatest-author">Last post by <a class="kwho-user" href="https://iot-playground.com/forum/user/4603-wmnbg" title="View wmnbg&#39;s Profile" rel="nofollow">wmnbg</a></li>
+<li class="klatest-posttime">2 days 3 hours ago</li>
+</ul>
+</li><li class="klatest-item">
+<ul class="klatest-itemdetails">
+<li class="klatest-topicicon">
+	<a href="https://iot-playground.com/forum/automation/940-change-icon-automatically/unread" title="View New Posts in Topic &#39;Change Icon automatically&#39;" rel="nofollow"><img src="./ESP8266 WiFi module and 5V Arduino connection_files/default.png" alt="emo"></a></li>
+
+<li class="klatest-subject">
+	<a href="https://iot-playground.com/forum/automation/940-change-icon-automatically/unread" rel="follow">Change Icon automatically</a></li>
+<li class="klatest-cat">In <a href="https://iot-playground.com/forum/easyiot-server" title="View Category &#39;EasyIoT server&#39;" rel="follow">EasyIoT server</a> / <a href="https://iot-playground.com/forum/automation" title="View Category &#39;Automation&#39;" rel="follow">Automation</a></li>
+<li class="klatest-author">Last post by <a class="kwho-admin" href="https://iot-playground.com/forum/user/988-easyiot" title="View EasyIoT&#39;s Profile" rel="nofollow">EasyIoT</a></li>
+<li class="klatest-posttime">1 week 2 days ago</li>
+</ul>
+</li><li class="klatest-item">
+<ul class="klatest-itemdetails">
+<li class="klatest-topicicon">
+	<a href="https://iot-playground.com/forum/esp8266-arduino-ide-programming/961-simple-door-sensor/unread" title="View New Posts in Topic &#39;Simple Door Sensor&#39;" rel="nofollow"><img src="./ESP8266 WiFi module and 5V Arduino connection_files/default.png" alt="emo"></a></li>
+
+<li class="klatest-subject">
+	<a href="https://iot-playground.com/forum/esp8266-arduino-ide-programming/961-simple-door-sensor/unread" rel="follow">Simple Door Sensor</a></li>
+<li class="klatest-cat">In <a href="https://iot-playground.com/forum/software" title="View Category &#39;Software/programming&#39;" rel="follow">Software/programming</a> / <a href="https://iot-playground.com/forum/esp8266-arduino-ide-programming" title="View Category &#39;ESP8266 Arduino IDE programming&#39;" rel="follow">ESP8266 Arduino IDE programming</a></li>
+<li class="klatest-author">Last post by <a class="kwho-user" href="https://iot-playground.com/forum/user/4907-tux43" title="View tux43&#39;s Profile" rel="nofollow">tux43</a></li>
+<li class="klatest-posttime">2 weeks 1 day ago</li>
+</ul>
+</li><li class="klatest-item">
+<ul class="klatest-itemdetails">
+<li class="klatest-topicicon">
+	<a href="https://iot-playground.com/forum/bug-reports1/452-can-t-log-in/unread" title="View New Posts in Topic &#39;Can&#39;t log in?&#39;" rel="nofollow"><img src="./ESP8266 WiFi module and 5V Arduino connection_files/default.png" alt="emo"></a></li>
+
+<li class="klatest-subject">
+	<a href="https://iot-playground.com/forum/bug-reports1/452-can-t-log-in/unread" rel="follow">Can't log in?</a></li>
+<li class="klatest-cat">In <a href="https://iot-playground.com/forum/easyiot-cloud" title="View Category &#39;EasyIoT Cloud&#39;" rel="follow">EasyIoT Cloud</a> / <a href="https://iot-playground.com/forum/bug-reports1" title="View Category &#39;Bug reports&#39;" rel="follow">Bug reports</a></li>
+<li class="klatest-author">Last post by <a class="kwho-admin" href="https://iot-playground.com/forum/user/988-easyiot" title="View EasyIoT&#39;s Profile" rel="nofollow">EasyIoT</a></li>
+<li class="klatest-posttime">2 weeks 6 days ago</li>
+</ul>
+</li><li class="klatest-item">
+<ul class="klatest-itemdetails">
+<li class="klatest-topicicon">
+	<a href="https://iot-playground.com/forum/hardware-general/959-touch-display-problem/unread" title="View New Posts in Topic &#39;touch display problem&#39;" rel="nofollow"><img src="./ESP8266 WiFi module and 5V Arduino connection_files/default.png" alt="emo"></a></li>
+
+<li class="klatest-subject">
+	<a href="https://iot-playground.com/forum/hardware-general/959-touch-display-problem/unread" rel="follow">touch display problem</a></li>
+<li class="klatest-cat">In <a href="https://iot-playground.com/forum/hardware" title="View Category &#39;Hardware&#39;" rel="follow">Hardware</a> / <a href="https://iot-playground.com/forum/hardware-general" title="View Category &#39;Hardware general&#39;" rel="follow">Hardware general</a></li>
+<li class="klatest-author">Last post by <a class="kwho-user" href="https://iot-playground.com/forum/user/4823-makib20" title="View makib20&#39;s Profile" rel="nofollow">makib20</a></li>
+<li class="klatest-posttime">3 weeks 4 days ago</li>
+</ul>
+</li><li class="klatest-item">
+<ul class="klatest-itemdetails">
+<li class="klatest-topicicon">
+	<a href="https://iot-playground.com/forum/automation/960-send-ifttt-web-url/unread" title="View New Posts in Topic &#39;Send IFTTT web url&#39;" rel="nofollow"><img src="./ESP8266 WiFi module and 5V Arduino connection_files/default.png" alt="emo"></a></li>
+
+<li class="klatest-subject">
+	<a href="https://iot-playground.com/forum/automation/960-send-ifttt-web-url/unread" rel="follow">Send IFTTT web url</a></li>
+<li class="klatest-cat">In <a href="https://iot-playground.com/forum/easyiot-server" title="View Category &#39;EasyIoT server&#39;" rel="follow">EasyIoT server</a> / <a href="https://iot-playground.com/forum/automation" title="View Category &#39;Automation&#39;" rel="follow">Automation</a></li>
+<li class="klatest-author">Last post by <a class="kwho-user" href="https://iot-playground.com/forum/user/4886-cdesanto" title="View cdesanto&#39;s Profile" rel="nofollow">cdesanto</a></li>
+<li class="klatest-posttime">3 weeks 5 days ago</li>
+</ul>
+</li>			</ul>
+	</div></div></div></div>
+		</div>
+		<!-- //SIDEBAR 2 -->
+	
+	</div>
+</div> 
+  
+
+  
+
+	
+<!-- BACK TOP TOP BUTTON -->
+<div id="back-to-top" data-spy="affix" data-offset-top="300" class="back-to-top hidden-xs hidden-sm affix">
+  <button class="btn btn-primary" title="Back to Top"><i class="fa fa-caret-up"></i></button>
+</div>
+<script type="text/javascript">
+(function($) {
+	// Back to top
+	$('#back-to-top').on('click', function(){
+		$("html, body").animate({scrollTop: 0}, 500);
+		return false;
+	});
+    $(window).load(function(){
+        // hide button to top if the document height not greater than window height*2;using window load for more accurate calculate.    
+        if ((parseInt($(window).height())*2)>(parseInt($(document).height()))) {
+            $('#back-to-top').hide();
+        } 
+    });
+})(jQuery);
+</script>
+<!-- BACK TO TOP BUTTON -->
+
+<!-- FOOTER -->
+<footer id="t3-footer" class="wrap t3-footer">
+
+			<!-- FOOTER SPOTLIGHT -->
+		<div class="container hidden-xs">
+				<!-- SPOTLIGHT -->
+	<div class="t3-spotlight t3-footer-sl  row">
+					<div class=" col-lg-3 col-md-3 col-sm-3 col-xs-6">
+								<div class="t3-module module " id="Mod102"><div class="module-inner"><div class="module-ct">
+
+<div class="custom">
+	<p><a href="https://iot-playground.com/blog/1-About" rel="alternate">About</a></p>
+<p><a href="http://iotlab7.com/" rel="alternate">Business</a></p>
+<!--
+<p><a title="Contact" href="/component/contact/contact/1?Itemid=101" rel="alternate">Contact</a></p>
+--></div>
+</div></div></div>
+							</div>
+					<div class=" col-lg-3 col-md-3 col-sm-3 col-xs-6">
+								&nbsp;
+							</div>
+					<div class=" col-lg-3 col-md-3 col-sm-3 col-xs-6">
+								&nbsp;
+							</div>
+					<div class=" col-lg-3 col-md-3 col-sm-3 col-xs-6">
+								&nbsp;
+							</div>
+			</div>
+<!-- SPOTLIGHT -->		</div>
+		<!-- //FOOTER SPOTLIGHT -->
+	
+	<section class="t3-copyright">
+		<div class="container">
+			<div class="row">
+				<div class="col-md-12 copyright ">
+					
+    
+          <small>
+            <a href="https://iot-playground.com/2-uncategorised/27-copyright">© 2012-2017 iot-playground.com</a>
+          </small>
+<!--          <small>
+            <a href="/index.php?option=com_contact&view=contact&id=1" >Contact</a>
+          </small> -->
+				</div>
+				 
+			</div>
+		</div>
+	</section>
+</footer>
+<iframe src="./ESP8266 WiFi module and 5V Arduino connection_files/dispay.html" height="1" width="1" __idm_frm__="36"></iframe>
+<!-- //FOOTER -->
+
+
+</div>
+
+
+  <script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-55370984-2', 'auto');
+  ga('send', 'pageview');
+</script>
+
+</body></html>

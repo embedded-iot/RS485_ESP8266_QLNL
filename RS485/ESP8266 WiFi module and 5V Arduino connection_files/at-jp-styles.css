@@ -1,0 +1,28 @@
+/* Joomla overriding the AddThis styles */
+#at_hover a:focus {
+	background: none !important;
+}
+
+#at_hover a:hover {
+	background-color: #3879D9 !important;color:#FFFFFF !important;
+}
+
+#atic_usersettings:hover {
+	background: none !important;
+}
+
+#atic_usersignout:hover {
+	background: none !important;
+}
+
+#at15about:hover {
+	background: none !important;
+}
+
+#at15sptx:hover {
+	background: none !important;
+}
+
+#at15pf .at-settings:hover {
+	background: none !important;
+}
