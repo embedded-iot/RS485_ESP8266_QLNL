@@ -55,8 +55,8 @@ ESP8266WebServer server(80);
 
 #define TIME_LIMIT_RESET 3000
 
-#define STA_SSID_DEFAULT "G"
-#define STA_PASS_DEFAULT "132654789"
+#define STA_SSID_DEFAULT "Gear"
+#define STA_PASS_DEFAULT "quan1995"
 #define AP_SSID_DEFAULT "MBELL"
 #define AP_PASS_DEFAULT ID_DEFAULT
 
@@ -88,7 +88,7 @@ String apSSID, apPASS;
 long timeStation = 7000;
 int idWebSite = 0;
 
-bool flagClear = false;
+bool flagClear = true;
 int countBaudrates = 9;
 long Baudrates[] = {2400, 4800, 9600, 14400, 19200, 28800, 38400, 57600,115200};
 long selectedBaudrate ;
@@ -205,6 +205,23 @@ void setup()
   timeUp = millis();
   timeSend = t1 = timeUp;
   show("End Setup()");
+
+  int vips60Address[] = { 0x25, 0x37, 0x47, 0x4d, 0x5d, 0x63, 0x73};
+  String vips60Label[] = { "F", "U1", "I1", "U2", "I2", "U3", "I3"};
+  SaveArrayToEEPROM(7, vips60Address, 300);
+  SaveArrayStringToEEPROM(7, vips60Label, 320);
+  int readArray[20];
+  String readArrayString[20];
+  int len = ReadArrayFromEEPROM((int*)readArray, 300);
+  int len1 = ReadArrayStringFromEEPROM((String*)readArrayString, 320);
+  show(String(len));
+  for (int i = 0; i < len; i++) {
+    show(String(readArray[i],HEX));
+  }
+  show(String(len1));
+  for (int i = 0; i < len1; i++) {
+    show(readArrayString[i]);
+  }
 }
 
 bool flagReponse = false;
@@ -418,6 +435,43 @@ String ReadStringFromEEPROM(int address)
   for (int i=1;i<=len;i++)
     s+=(char)EEPROM.read(address+i);
   return s;
+}
+
+void SaveArrayStringToEEPROM(int len, String arrayString[], int address)
+{
+  EEPROM.write(address,len); 
+  ++address;
+  for (int i = 0; i < len; i++) {
+    SaveStringToEEPROM(arrayString[i], address);
+    address += 1 + arrayString[i].length();
+  }
+  EEPROM.commit();
+}
+int ReadArrayStringFromEEPROM(String *arr, int address)
+{
+  int len=(int)EEPROM.read(address);
+  ++address;
+  for (int i = 0; i < len; i++) {
+    String str = ReadStringFromEEPROM(address);
+    *(arr + i)= str;
+    address += 1 + str.length();
+  }
+  return len;
+}
+
+void SaveArrayToEEPROM(int len, int arrayInt[],int address)
+{
+  EEPROM.write(address,len); 
+  for (int i = 1; i <= len; i++)
+    EEPROM.write(address+i,arrayInt[i-1]);
+  EEPROM.commit();
+}
+int ReadArrayFromEEPROM(int *arr, int address)
+{
+  int len=(int)EEPROM.read(address);
+  for (int i=1;i<=len;i++)
+    *(arr + i - 1)=(char)EEPROM.read(address+i);
+  return len;
 }
 
 void ConfigRS485() {
@@ -800,7 +854,7 @@ String Title(){
   <title>Config</title>\
   <style>\
     * {margin:0;padding:0}\
-    body {width: 600px;height: auto;border: red 3px solid; margin: 0 auto; box-sizing: border-box}\
+    body {min-width: 600px; width: 100%;height: auto;border: red 3px solid; margin: 0 auto; box-sizing: border-box}\
     .head1{ display: flex; height: 50px;border-bottom: red 3px solid;}\
     .head1 h1{margin: auto;}\
     table, th, td { border: 1px solid black;border-collapse: collapse;}\
@@ -902,10 +956,7 @@ String ContentConfig(){
         <div class=\"right\">: " + dropdownParities() + "</div>\
         <div class=\"left\">Stop Bits</div>\
         <div class=\"right\">: " + dropdownStopBits() + "</div>\
-        <div class=\"left\">Start Address (HEX)</div>\
-        <div class=\"right\">: <input class=\"input\" placeholder=\"Địa chỉ bắt đầu\" name=\"txtStartAddress\" value=\""+ String(startAddress,HEX) +"\" required></div>\
-        <div class=\"left\">Total Register (HEX)</div>\
-        <div class=\"right\">: <input class=\"input\" placeholder=\"Số thanh ghi cần đọc\" name=\"txtTotalRegister\" value=\""+ String(totalRegister ,HEX)+"\" required></div>\
+        " + strSetStartAdressAndTotalRegister() + "\
         <br>" + formAddressAndLabelConfig() + "\
         <hr>\
         <div class=\"listBtn\">\
@@ -921,6 +972,15 @@ String ContentConfig(){
   return content;
 }
 
+String strSetStartAdressAndTotalRegister() {
+  if (modeTest) {
+    String content = "<div class=\"left\">Start Address (HEX)</div>\
+      <div class=\"right\">: <input class=\"input\" placeholder=\"Địa chỉ bắt đầu\" name=\"txtStartAddress\" value=\""+ String(startAddress,HEX) +"\" required></div>\
+      <div class=\"left\">Total Register (HEX)</div>\
+      <div class=\"right\">: <input class=\"input\" placeholder=\"Số thanh ghi cần đọc\" name=\"txtTotalRegister\" value=\""+ String(totalRegister ,HEX)+"\" required></div>";
+  }
+  return "";
+}
 /*<div class=\"subtitle\">Configuration Inventer</div>\
 <div class=\"left\">Name Inventer</div>\
 <div class=\"right\">: " + dropdownInventers() + "</div>\
@@ -992,7 +1052,7 @@ String RegisterMaps(){
   return content;
 }
 String formAddressAndLabelConfig(){
-  String content = "<div class=\"subtitle\">Config Label and Address for RS485</div>\
+  String content = "<div class=\"subtitle\">Config Label and Address for RS485</div><br>\
     <table class=\"small-table\"><tr class=\"row\"><th>Label Name</th><th>Address (HEX)</th></tr>"+ SendTRAddressLabel() +"</table>\
     <div class=\"left\">Label Name</div>\
     <div class=\"right\">: <input class=\"input\" placeholder=\"Tên nhãn\" name=\"txtLabelConfig\" value=\"\"></div>\
@@ -1088,6 +1148,32 @@ String dropdownStopBits() {
   s += "</select>";
   return s;
 }
+void AddAndRemoveLabelAddress(String action, String label, int address) {
+  if (action == "Add") {
+    ListLabel[totalCount] = label;
+    ListAddress[totalCount] = address;
+    totalCount++;
+  } else {
+    int i = 0;
+    while (i < totalCount) {
+      if (ListLabel[i] == label && ListAddress[i] == address) {
+        ListLabel[i] = ListLabel[i + 1];
+        ListAddress[i] = ListAddress[i + 1];
+        totalCount--;
+      }
+      ++i;
+    }
+  }
+}
+boolean isCheckLabelAddressConfig(String label, int address) {
+  int i = -1;
+  while (++i < totalCount) {
+    if (ListLabel[i] == label && ListAddress[i] == address) {
+      return true;
+    }
+  }
+  return false;
+}
 void GiaTriThamSo()
 {
   t = millis();
@@ -1098,6 +1184,7 @@ void GiaTriThamSo()
   message += server.args();
   message += "\n";
   String UserName, PassWord;
+  String labelConfig, addressConfig;
   for (uint8_t i=0; i<server.args(); i++){
      
     String Name=server.argName(i); 
@@ -1207,8 +1294,34 @@ void GiaTriThamSo()
           requestDataInventer();
         }
       }
-
-
+      else if (Name.indexOf("txtLabelConfig") >= 0){
+        if (Value != ""){
+          labelConfig = Value;
+          show("Set labelConfig : " + labelConfig);
+        }
+      }
+      else if (Name.indexOf("txtAddressConfig") >= 0){
+        if (Value != ""){
+          addressConfig = Value;
+          show("Set addressConfig : " + addressConfig);
+        }
+      }
+      else if (Name.indexOf("btnAddLabelAddress") >= 0){
+        if (labelConfig != "" && addressConfig != "" && !isCheckLabelAddressConfig(labelConfig, StringHexToInt(addressConfig))) {
+          AddAndRemoveLabelAddress("Add", labelConfig, StringHexToInt(addressConfig));
+          show("Add config:");
+          show("Label:" + labelConfig);
+          show("Address:" + addressConfig);
+        }
+      }
+      else if (Name.indexOf("btnRemoveLabelAddres") >= 0){
+        if (labelConfig != "" && addressConfig != "" && isCheckLabelAddressConfig(labelConfig, StringHexToInt(addressConfig))) {
+          AddAndRemoveLabelAddress("Remove", labelConfig, StringHexToInt(addressConfig));
+          show("Remove config:");
+          show("Label:" + labelConfig);
+          show("Address:" + addressConfig);
+        }
+      }
       else if (Name.indexOf("txtRestart") >= 0){
         idWebSite = 2;
         show("Verify restart");
