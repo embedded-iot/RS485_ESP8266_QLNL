@@ -818,6 +818,8 @@ String Title(){
     .column {width: 50%;text-align: center;}\
     .column3 {width: 33.3%;text-align: center;}\
     .noboder {border: none;}\
+    .align-left {text-align: left;}\
+    .small-table .row {height: auto;}\
   </style>\
   </head>";
   return html;
@@ -904,6 +906,7 @@ String ContentConfig(){
         <div class=\"right\">: <input class=\"input\" placeholder=\"Địa chỉ bắt đầu\" name=\"txtStartAddress\" value=\""+ String(startAddress,HEX) +"\" required></div>\
         <div class=\"left\">Total Register (HEX)</div>\
         <div class=\"right\">: <input class=\"input\" placeholder=\"Số thanh ghi cần đọc\" name=\"txtTotalRegister\" value=\""+ String(totalRegister ,HEX)+"\" required></div>\
+        <br>" + formAddressAndLabelConfig() + "\
         <hr>\
         <div class=\"listBtn\">\
           <button type=\"submit\"><a href=\"?txtRefresh=true\">Refresh</a></button>\
@@ -987,6 +990,32 @@ String RegisterMaps(){
   </body>\
   </html>";
   return content;
+}
+String formAddressAndLabelConfig(){
+  String content = "<div class=\"subtitle\">Config Label and Address for RS485</div>\
+    <table class=\"small-table\"><tr class=\"row\"><th>Label Name</th><th>Address (HEX)</th></tr>"+ SendTRAddressLabel() +"</table>\
+    <div class=\"left\">Label Name</div>\
+    <div class=\"right\">: <input class=\"input\" placeholder=\"Tên nhãn\" name=\"txtLabelConfig\" value=\"\"></div>\
+    <div class=\"left\">Address (HEX)</div>\
+    <div class=\"right\">: <input class=\"input\" placeholder=\"Địa chỉ (hex)\" name=\"txtAddressConfig\" value=\"\"></div>\
+    <div class=\"left\"></div>\
+    <div class=\"right\">\
+     <div class=\"listBtn align-left\">\
+       <button type=\"submit\" name=\"btnAddLabelAddress\" value=\"true\">Add</button>\
+       <button type=\"submit\" name=\"btnRemoveLabelAddres\" value=\"true\">Remove</button>\
+      </div>\
+    </div>";
+  return content;
+}
+
+String SendTRAddressLabel()
+{
+  String s="";
+  for (int i = 0; i< totalCount ; i++) {
+    s += "<tr class=\"row\"><td class=\"column\">"+ ListLabel[i] +"</td><td class=\"column\">"+ String(ListAddress[i],HEX) +"</td></tr>";
+  }
+  //show(s);
+  return s;
 }
 String SendTRRegisterMaps()
 {
@@ -1178,6 +1207,7 @@ void GiaTriThamSo()
           requestDataInventer();
         }
       }
+
 
       else if (Name.indexOf("txtRestart") >= 0){
         idWebSite = 2;
