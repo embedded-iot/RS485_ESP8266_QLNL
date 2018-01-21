@@ -48,15 +48,16 @@ ESP8266WebServer server(80);
 
 #define ADDR_URL_UPLOAD (ADDR_SELECTED_INVENTER+20)
 
-
+#define ADDR_ARRAY_LABEL (ADDR_URL_UPLOAD + 50)
+#define ADDR_ARRAY_ADDRESS (ADDR_ARRAY_LABEL + 20)
 
 
 #define ID_DEFAULT "1234567890"
 
 #define TIME_LIMIT_RESET 3000
 
-#define STA_SSID_DEFAULT "Gear"
-#define STA_PASS_DEFAULT "quan1995"
+#define STA_SSID_DEFAULT "G"
+#define STA_PASS_DEFAULT "132654789"
 #define AP_SSID_DEFAULT "MBELL"
 #define AP_PASS_DEFAULT ID_DEFAULT
 
@@ -88,7 +89,7 @@ String apSSID, apPASS;
 long timeStation = 7000;
 int idWebSite = 0;
 
-bool flagClear = true;
+bool flagClear = false;
 int countBaudrates = 9;
 long Baudrates[] = {2400, 4800, 9600, 14400, 19200, 28800, 38400, 57600,115200};
 long selectedBaudrate ;
@@ -144,7 +145,7 @@ void GiaTriThamSo();
 
 
 long t ;
-long timeLogout = 30000;
+long timeLogout = 60000;
 long timeUp;
 long t1;
 long timeReconnectAccessPoint = 120*1000; //60 giay
@@ -195,33 +196,19 @@ void setup()
   if (ENABLE_RS485) {
     ConfigRS485();
   }
-  if (modeTest)
+  if (modeTest) {
     requestDataInventer();
-  else ConfigForModel();
+  }
+  //else ConfigForModel();
   delay(1000);
   if (isConnectAP == false) {
     blinkLed(3,1000);
   }
   timeUp = millis();
   timeSend = t1 = timeUp;
+  show("");
   show("End Setup()");
-
-  int vips60Address[] = { 0x25, 0x37, 0x47, 0x4d, 0x5d, 0x63, 0x73};
-  String vips60Label[] = { "F", "U1", "I1", "U2", "I2", "U3", "I3"};
-  SaveArrayToEEPROM(7, vips60Address, 300);
-  SaveArrayStringToEEPROM(7, vips60Label, 320);
-  int readArray[20];
-  String readArrayString[20];
-  int len = ReadArrayFromEEPROM((int*)readArray, 300);
-  int len1 = ReadArrayStringFromEEPROM((String*)readArrayString, 320);
-  show(String(len));
-  for (int i = 0; i < len; i++) {
-    show(String(readArray[i],HEX));
-  }
-  show(String(len1));
-  for (int i = 0; i < len1; i++) {
-    show(readArrayString[i]);
-  }
+  show("==============================================");
 }
 
 bool flagReponse = false;
@@ -247,7 +234,7 @@ void loop()
   }
   
   if (!modeTest && ENABLE_RS485 && (millis() - timeUp > timeUpload)) {
-    if (!flagReponse) { // giao tiếp dc với sensor (flagReponse == false ) thì upload du lieu 
+    if (!flagReponse && totalCount > 0) { // giao tiếp dc với sensor (flagReponse == false ) thì upload du lieu 
       dataUploadToServer = formatData();
       show(dataUploadToServer);
       if (isConnectAP) {
@@ -321,6 +308,7 @@ void loop()
     while (digitalRead(RESET) == LOW && t1-- >= 0){
       delay(100);
     }
+    while (digitalRead(RESET) == LOW);
     if (t1 < 0){
       show("RESET");
       ConfigDefault();
@@ -459,14 +447,14 @@ int ReadArrayStringFromEEPROM(String *arr, int address)
   return len;
 }
 
-void SaveArrayToEEPROM(int len, int arrayInt[],int address)
+void SaveArrayIntToEEPROM(int len, int arrayInt[],int address)
 {
   EEPROM.write(address,len); 
   for (int i = 1; i <= len; i++)
     EEPROM.write(address+i,arrayInt[i-1]);
   EEPROM.commit();
 }
-int ReadArrayFromEEPROM(int *arr, int address)
+int ReadArrayIntFromEEPROM(int *arr, int address)
 {
   int len=(int)EEPROM.read(address);
   for (int i=1;i<=len;i++)
@@ -652,7 +640,7 @@ void ConfigDefault()
   urlUpload = URL_UPLOAD_DEFAULT;
   timeUpload = TIME_UPLOAD_DEFAULT;
   selectedBaudrate = BAUDRATE_DEFAULT;
-  selectedInventer = modelsInventer[0];
+  selectedInventer = "";
 
   idSlave = ID_SLAVE_DEFAULT;
   selectedDataSize = DATA_SIZE_DEFAULT;
@@ -661,6 +649,13 @@ void ConfigDefault()
 
   startAddress = START_ADDRESS_DEFAULT;
   totalRegister = TOTAL_REGISTER_DEFAULT;
+
+  int i = -1;
+  while (++i < maxLength) {
+    ListLabel[i] = "";
+    ListAddress[i] = 0;
+  }
+  totalCount = 0;
 
   show("Config Default");
 }
@@ -688,6 +683,9 @@ void WriteConfig()
   SaveStringToEEPROM(String(startAddress), ADDR_START_ADDRESS);
   SaveStringToEEPROM(String(totalRegister), ADDR_TOTAL_REGISTER);
   
+  SaveArrayIntToEEPROM(totalCount, ListAddress, ADDR_ARRAY_ADDRESS);
+  SaveArrayStringToEEPROM(totalCount, ListLabel, ADDR_ARRAY_LABEL);
+
   show("Write Config");
 }
 void ReadConfig()
@@ -712,6 +710,9 @@ void ReadConfig()
   startAddress = atoi(ReadStringFromEEPROM(ADDR_START_ADDRESS).c_str());;
   totalRegister = atoi(ReadStringFromEEPROM(ADDR_TOTAL_REGISTER).c_str());;
   
+  int lengthListAddress = ReadArrayIntFromEEPROM((int*)ListAddress, ADDR_ARRAY_ADDRESS);
+  int lengthListLabel = ReadArrayStringFromEEPROM((String*)ListLabel, ADDR_ARRAY_LABEL);
+
   //portTCP = atol(ReadStringFromEEPROM(ADDR_PORTTCP).c_str());
   show("Read Config");
   show(staSSID);
@@ -730,6 +731,18 @@ void ReadConfig()
   show(String(selectedStopBits));
   show(String(startAddress,HEX));
   show(String(totalRegister,HEX));
+  show("Array Label and Address:");
+  if (lengthListLabel == lengthListAddress) {
+    totalCount = lengthListLabel;
+    show("totalCount:" + String(totalCount));
+  } else {
+    totalCount = 0;
+    show("Error: lengthListLabel != lengthListAddress");
+  }
+  for (int i = 0; i < totalCount; i++) {
+    show(ListLabel[i]);
+    show(String(ListAddress[i],HEX));
+  }
 }
 void AccessPoint()
 {
@@ -944,8 +957,8 @@ String ContentConfig(){
         <div class=\"left\">Time Upload</div>\
         <div class=\"right\">: <input class=\"input\" type=\"number\" placeholder=\"Thời gian upload dữ liệu\" name=\"txtTimeUpload\" value=\""+ String(timeUpload) +"\" required></div>\
         <div class=\"subtitle\">Configuration Inventer</div>\
-        <div class=\"left\">Name Inventer</div>\
-        <div class=\"right\">: " + dropdownInventers() + "</div>\
+        <div class=\"left\">Name Device</div>\
+        <div class=\"right\">: <input class=\"input\" placeholder=\"Tên thiết bị\" name=\"txtSelectedInventer\" value=\"" + selectedInventer + "\" ></div>\
         <div class=\"left\">Baudrate</div>\
         <div class=\"right\">: " + dropdownBaudrates() + "</div>\
         <div class=\"left\">Id Slave</div>\
@@ -1312,6 +1325,8 @@ void GiaTriThamSo()
           show("Add config:");
           show("Label:" + labelConfig);
           show("Address:" + addressConfig);
+          WriteConfig();
+          show("Save config");
         }
       }
       else if (Name.indexOf("btnRemoveLabelAddres") >= 0){
@@ -1320,6 +1335,8 @@ void GiaTriThamSo()
           show("Remove config:");
           show("Label:" + labelConfig);
           show("Address:" + addressConfig);
+          WriteConfig();
+          show("Save config");
         }
       }
       else if (Name.indexOf("txtRestart") >= 0){
