@@ -292,13 +292,14 @@ void loop()
            show(String(ListValue[indexAddress]));
          }
        }
+       flagReponse = false;
     }else  {
       show("Reponse RX Error!");
       if (lenRX485 == 0) { // trước khi gửi flagReponse == true thì ko giao tiếp dc với sensor
         blinkLed(1,500);
       }
     }
-    flagReponse = false;
+    
   }
   
   if (digitalRead(RESET) == LOW)
@@ -378,7 +379,9 @@ String formatData() {
     if (i != (totalCount -1)) 
       str += ",";
   }
-  str += "&Model=Inventer";
+  if (selectedInventer != "") {
+    str += "&Model=" + selectedInventer;
+  }
   return str;
 }
 void GPIO()
@@ -986,13 +989,14 @@ String ContentConfig(){
 }
 
 String strSetStartAdressAndTotalRegister() {
+  String content = "";
   if (modeTest) {
-    String content = "<div class=\"left\">Start Address (HEX)</div>\
+     content = "<div class=\"left\">Start Address (HEX)</div>\
       <div class=\"right\">: <input class=\"input\" placeholder=\"Địa chỉ bắt đầu\" name=\"txtStartAddress\" value=\""+ String(startAddress,HEX) +"\" required></div>\
       <div class=\"left\">Total Register (HEX)</div>\
       <div class=\"right\">: <input class=\"input\" placeholder=\"Số thanh ghi cần đọc\" name=\"txtTotalRegister\" value=\""+ String(totalRegister ,HEX)+"\" required></div>";
   }
-  return "";
+  return content;
 }
 /*<div class=\"subtitle\">Configuration Inventer</div>\
 <div class=\"left\">Name Inventer</div>\
