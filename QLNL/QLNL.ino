@@ -113,7 +113,7 @@ String selectedInventer ;
 
 
 unsigned char I1[8],I2[8],I3[8],U1[8],U2[8],U3[8],P1[8],P2[8],P3[8],totalenergy[11];
-unsigned char bufferRS[30]; 
+unsigned char bufferRS[200]; 
 int lenRX485;
 float realnum;
 byte sData[8];
@@ -154,18 +154,17 @@ long timeSend = 0;
 bool modeTest = false;
 void setup()
 {
-  delay(1000);
   Serial.begin(9600);
+  GPIO();
   if (digitalRead(RESET) == LOW)
   {
     modeTest = true;
-  }
-  GPIO();
-  delay(1000);
-  if (modeTest) {
     show("Mode: Test!");
-    blinkLed(3,1000);
+    if (modeTest) {
+      blinkLed(3,500);
+    }
   }
+  digitalWrite(LED,LOW);
   delay(1000);
   idWebSite = 0;
   isLogin = false;
@@ -240,7 +239,7 @@ void loop()
       if (isConnectAP) {
         responseUpload = HTTP_REQUEST(urlUpload, dataUploadToServer);
         show(responseUpload);
-        blinkLed(2,100);
+        blinkLed(2,300);
       }
     } else {
       responseUpload = "False";
@@ -249,24 +248,28 @@ void loop()
   }
   // 
   if (!modeTest && ENABLE_RS485 && totalCount > 0 && (millis() - timeSend > timeSendRS485)) {
-    if (flagReponse) { // trước khi gửi flagReponse == true thì ko giao tiếp dc với sensor
-      ListValue[indexAddress] = 0.00;
-      blinkLed(1,500); 
-    }
     if (++indexAddress < totalCount ) {
+      if (flagReponse == true) { // trước khi gửi flagReponse == true thì ko giao tiếp dc với sensor
+        ListValue[indexAddress] = 0.00;
+        blinkLed(1,500); 
+        show("Reponse RX Error!");
+        show("blink 2");
+      }
       requestDataInventer(ListAddress[indexAddress], 2);
       sendRequestToRS485();
+      flagReponse = true;
     }
     else {
       indexAddress = -1;
     }
-    flagReponse = true;
     timeSend = millis();
   }
   // 
   if (modeTest && ENABLE_RS485 && (millis() - timeSend > timeUpload)) {
     if (flagReponse) { // trước khi gửi flagReponse == true thì ko giao tiếp dc với sensor
-      blinkLed(1,100);
+      blinkLed(1,500);
+      show("blink 1");
+      show("Reponse RX Error!");
     }
     sendRequestToRS485();
     flagReponse = true;
@@ -291,13 +294,15 @@ void loop()
            show(ListLabel[indexAddress]);
            show(String(ListValue[indexAddress]));
          }
+        flagReponse = false;
+
        }
-       flagReponse = false;
+       //flagReponse = false;
     }else  {
       show("Reponse RX Error!");
-      if (lenRX485 == 0) { // trước khi gửi flagReponse == true thì ko giao tiếp dc với sensor
-        blinkLed(1,500);
-      }
+      // if (lenRX485 == 0) { // trước khi gửi flagReponse == true thì ko giao tiếp dc với sensor
+      //   blinkLed(1,500);
+      // }
     }
     
   }
@@ -823,9 +828,12 @@ String HTTP_REQUEST(String Url, String request)
 void StartServer()
 {
   server.on("/", webConfig);
-  server.on("/homeTest", webViewHome);
-  server.on("/registerTest", webRegisterMaps);
-  server.on("/homeMain", webViewHomeMain);
+  //server.on("/homeTest", webViewHome);
+  if (modeTest) {
+    server.on("/home", webRegisterMaps);
+  } else {
+    server.on("/home", webViewHomeMain);
+  }
   
   server.onNotFound(handleNotFound);
   //server.onNotFound(webConfig);
@@ -867,22 +875,23 @@ String Title(){
   String html = "<html>\
   <head>\
   <meta charset=\"utf-8\">\
+  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\
   <title>Config</title>\
   <style>\
     * {margin:0;padding:0}\
-    body {min-width: 600px; width: 100%;height: auto;border: red 3px solid; margin: 0 auto; box-sizing: border-box}\
+    body {width: 100%;height: auto;border: red 3px solid; margin: 0 auto; box-sizing: border-box}\
     .head1{ display: flex; height: 50px;border-bottom: red 3px solid;}\
     .head1 h1{margin: auto;}\
     table, th, td { border: 1px solid black;border-collapse: collapse;}\
     tr{ height: 40px;text-align: center;font-size: 20px;}\
-    .input, input { height: 25px;text-align: center;min-width: 74%;}\
-    button {height: 25px;width: 100px;margin: 5px;}\
+    .input, input { height: 25px;text-align: center;width: 90%;}\
+    button {height: 25px;min-width: 100px;margin: 5px;}\
     button:hover {background: #ccc; font-weight: bold; cursor: pointer;}\
     .subtitle {text-align: left;font-weight: bold;}\
     .content {padding: 10px 20px;}\
-    .left , .right { width: 50%; float: left;text-align: left;line-height: 25px;padding: 5px 0;}\
+    .left , .right { width: 50%; float: left;text-align: left;line-height: 25px;padding: 5px 0; vertical-align: top;}\
     .left {text-align: right}\
-    .listBtn {text-align: center}\
+    .listBtn {width: 100%; display: inline-block; text-align: center}\
     a {text-decoration: none;}\
     table {width: 100%;}\
     .column {width: 50%;text-align: center;}\
@@ -890,6 +899,10 @@ String Title(){
     .noboder {border: none;}\
     .align-left {text-align: left;}\
     .small-table .row {height: auto;}\
+    .row-block {display: inline-block; width: 100%;}\
+    @media only screen and (min-width: 768px) {\
+      body {width: 600px;}\
+      }\
   </style>\
   </head>";
   return html;
@@ -919,12 +932,14 @@ String ContentLogin(){
     </div>\
     <div class=\"content\">\
       <form action=\"\" method=\"get\">\
-        <div class=\"left\">Name Access Point </div>\
-        <div class=\"right\">: <input class=\"input\" placeholder=\"Tên wifi\" name=\"txtNameAP\" required></div>\
-        <div class=\"left\">Password Port TCP</div>\
-        <div class=\"right\">: <input class=\"input\" placeholder=\"Cổng TCP\" name=\"txtPassPortTCP\" required></div>\
+        <div class=\"row-block\"><div class=\"left\">Name Access Point </div>\
+        <div class=\"right\">: <input class=\"input\" placeholder=\"Tên wifi\" name=\"txtNameAP\" required></div></div>\
+        <div class=\"row-block\"><div class=\"left\">Password Port TCP</div>\
+        <div class=\"right\">: <input class=\"input\" placeholder=\"Cổng TCP\" name=\"txtPassPortTCP\" required></div></div>\
         <div class=\"listBtn\">\
-      <button type=\"submit\">Login</button></div>\
+          <button><a href=\"/home\" target=\"_blank\">=>>Visit Home Page!</a></button>\
+          <button type=\"submit\">Login</button>\
+        </div>\
       </form>\
     </div>\
   </body>\
@@ -939,39 +954,40 @@ String ContentConfig(){
     <div class=\"content\">\
       <form action=\"\" method=\"get\">\
         <div class=\"subtitle\">Station mode (Connect to other Access Point)</div>\
-        <div class=\"left\">Name Access Point </div>\
-        <div class=\"right\">: <input class=\"input\" placeholder=\"Tên wifi\" name=\"txtSTAName\" value=\""+staSSID+"\" required></div>\
-        <div class=\"left\">Password Access Point</div>\
-        <div class=\"right\">: <input class=\"input\" placeholder=\"Mật khấu wifi\" name=\"txtSTAPass\" value=\""+staPASS+"\"></div>\
-        <div class=\"left\">Status</div>\
-        <div class=\"right\">: "+(isConnectAP == true ? "Connected" : "Disconnect")+"</div>\
+        <div class=\"row-block\"><div class=\"left\">Name Access Point </div>\
+        <div class=\"right\">: <input class=\"input\" placeholder=\"Tên wifi\" name=\"txtSTAName\" value=\""+staSSID+"\" required></div></div>\
+        <div class=\"row-block\"><div class=\"left\">Password Access Point</div>\
+        <div class=\"right\">: <input class=\"input\" placeholder=\"Mật khấu wifi\" name=\"txtSTAPass\" value=\""+staPASS+"\"></div></div>\
+        " + strIPAddress() + "\
+        <div class=\"row-block\"><div class=\"left\">Status</div>\
+        <div class=\"right\">: "+(isConnectAP == true ? "Connected" : "Disconnect")+"</div></div>\
         <div class=\"subtitle\">Access Point mode (This is a Access Point)</div>\
-        <div class=\"left\">Name</div>\
-        <div class=\"right\">: <input class=\"input\" placeholder=\"Tên wifi phát ra\" name=\"txtAPName\" value=\""+apSSID+"\" required></div>\
-        <div class=\"left\">Password(Pass login)</div>\
-        <div class=\"right\">: <input class=\"input\" placeholder=\"Mật khẩu wifi phát ra\" name=\"txtAPPass\" value=\""+apPASS+"\"></div>\
+        <div class=\"row-block\"><div class=\"left\">Name</div>\
+        <div class=\"right\">: <input class=\"input\" placeholder=\"Tên wifi phát ra\" name=\"txtAPName\" value=\""+apSSID+"\" required></div></div>\
+        <div class=\"row-block\"><div class=\"left\">Password(Pass login)</div>\
+        <div class=\"right\">: <input class=\"input\" placeholder=\"Mật khẩu wifi phát ra\" name=\"txtAPPass\" value=\""+apPASS+"\"></div></div>\
         <div class=\"subtitle\">Server Upload Data</div>\
-        <div class=\"left\">User Name</div>\
-        <div class=\"right\">: <input class=\"input\" placeholder=\"Tên tài khoản\" name=\"txtUseName\" value=\""+UseName+"\" required></div>\
-        <div class=\"left\">Code</div>\
-        <div class=\"right\">: <input class=\"input\" placeholder=\"Mã thiết bị\" name=\"txtcode\" value=\""+code+"\" required></div>\
-        <div class=\"left\">URL Upload Data</div>\
-        <div class=\"right\">: <input class=\"input\" type=\"url\" placeholder=\"Link ắp dữ liệu\" name=\"txtUrlUpload\" value=\""+urlUpload+"\" required></div>\
-        <div class=\"left\">Time Upload</div>\
-        <div class=\"right\">: <input class=\"input\" type=\"number\" placeholder=\"Thời gian upload dữ liệu\" name=\"txtTimeUpload\" value=\""+ String(timeUpload) +"\" required></div>\
-        <div class=\"subtitle\">Configuration Inventer</div>\
-        <div class=\"left\">Name Device</div>\
-        <div class=\"right\">: <input class=\"input\" placeholder=\"Tên thiết bị\" name=\"txtSelectedInventer\" value=\"" + selectedInventer + "\" ></div>\
-        <div class=\"left\">Baudrate</div>\
-        <div class=\"right\">: " + dropdownBaudrates() + "</div>\
-        <div class=\"left\">Id Slave</div>\
-        <div class=\"right\">: <input class=\"input\" type=\"number\" placeholder=\"Địa chỉ Inventer\" name=\"txtIdSlave\" value=\""+ String(idSlave) +"\" required></div>\
-        <div class=\"left\">Data Size</div>\
-        <div class=\"right\">: " + dropdownDataSizes() + "</div>\
-        <div class=\"left\">Parity</div>\
-        <div class=\"right\">: " + dropdownParities() + "</div>\
-        <div class=\"left\">Stop Bits</div>\
-        <div class=\"right\">: " + dropdownStopBits() + "</div>\
+        <div class=\"row-block\"><div class=\"left\">User Name</div>\
+        <div class=\"right\">: <input class=\"input\" placeholder=\"Tên tài khoản\" name=\"txtUseName\" value=\""+UseName+"\" required></div></div>\
+        <div class=\"row-block\"><div class=\"left\">Code</div>\
+        <div class=\"right\">: <input class=\"input\" placeholder=\"Mã thiết bị\" name=\"txtcode\" value=\""+code+"\" required></div></div>\
+        <div class=\"row-block\"><div class=\"left\">URL Upload Data</div>\
+        <div class=\"right\">: <input class=\"input\" type=\"url\" placeholder=\"Link ắp dữ liệu\" name=\"txtUrlUpload\" value=\""+urlUpload+"\" required></div></div>\
+        <div class=\"row-block\"><div class=\"left\">Time Upload</div>\
+        <div class=\"right\">: <input class=\"input\" type=\"number\" placeholder=\"Thời gian upload dữ liệu\" name=\"txtTimeUpload\" value=\""+ String(timeUpload) +"\" required></div></div>\
+        <div class=\"subtitle\">Configuration RS485</div>\
+        <div class=\"row-block\"><div class=\"left\">Name Device</div>\
+        <div class=\"right\">: <input class=\"input\" placeholder=\"Tên thiết bị\" name=\"txtSelectedInventer\" value=\"" + selectedInventer + "\" ></div></div>\
+        <div class=\"row-block\"><div class=\"left\">Baudrate</div>\
+        <div class=\"right\">: " + dropdownBaudrates() + "</div></div>\
+        <div class=\"row-block\"><div class=\"left\">Id Slave</div>\
+        <div class=\"right\">: <input class=\"input\" type=\"number\" placeholder=\"Địa chỉ Inventer\" name=\"txtIdSlave\" value=\""+ String(idSlave) +"\" required></div></div>\
+        <div class=\"row-block\"><div class=\"left\">Data Size</div>\
+        <div class=\"right\">: " + dropdownDataSizes() + "</div></div>\
+        <div class=\"row-block\"><div class=\"left\">Parity</div>\
+        <div class=\"right\">: " + dropdownParities() + "</div></div>\
+        <div class=\"row-block\"><div class=\"left\">Stop Bits</div>\
+        <div class=\"right\">: " + dropdownStopBits() + "</div></div>\
         " + strSetStartAdressAndTotalRegister() + "\
         <br>" + formAddressAndLabelConfig() + "\
         <hr>\
@@ -988,22 +1004,32 @@ String ContentConfig(){
   return content;
 }
 
+String strIPAddress() {
+  String content = "";
+  if (isConnectAP) {
+    IPAddress myIP = WiFi.localIP();
+    String LocalIP = ""+(String)myIP[0] + "." + (String)myIP[1] + "." +(String)myIP[2] + "." +(String)myIP[3];
+     content = "<div class=\"row-block\"><div class=\"left\">IP Address</div>\
+      <div class=\"right\">: " + LocalIP + "</div></div>";
+  }
+  return content;
+}
 String strSetStartAdressAndTotalRegister() {
   String content = "";
   if (modeTest) {
-     content = "<div class=\"left\">Start Address (HEX)</div>\
-      <div class=\"right\">: <input class=\"input\" placeholder=\"Địa chỉ bắt đầu\" name=\"txtStartAddress\" value=\""+ String(startAddress,HEX) +"\" required></div>\
-      <div class=\"left\">Total Register (HEX)</div>\
-      <div class=\"right\">: <input class=\"input\" placeholder=\"Số thanh ghi cần đọc\" name=\"txtTotalRegister\" value=\""+ String(totalRegister ,HEX)+"\" required></div>";
+     content = "<div class=\"row-block\"><div class=\"left\">Start Address (HEX)</div>\
+      <div class=\"right\">: <input class=\"input\" placeholder=\"Địa chỉ bắt đầu\" name=\"txtStartAddress\" value=\""+ String(startAddress,HEX) +"\" required></div></div>\
+      <div class=\"row-block\"><div class=\"left\">Total Register (HEX)</div>\
+      <div class=\"right\">: <input class=\"input\" placeholder=\"Số thanh ghi cần đọc\" name=\"txtTotalRegister\" value=\""+ String(totalRegister ,HEX)+"\" required></div></div>";
   }
   return content;
 }
 /*<div class=\"subtitle\">Configuration Inventer</div>\
-<div class=\"left\">Name Inventer</div>\
+<div class=\"row-block\"><div class=\"left\">Name Inventer</div>\
 <div class=\"right\">: " + dropdownInventers() + "</div>\
-<div class=\"left\">Baudrate</div>\
+<div class=\"row-block\"><div class=\"left\">Baudrate</div>\
 <div class=\"right\">: " + dropdownBaudrates() + "</div>\
-<div class=\"left\">Time Upload</div>\
+<div class=\"row-block\"><div class=\"left\">Time Upload</div>\
 <div class=\"right\">: <input class=\"input\" type=\"number\" placeholder=\"Thời gian upload dữ liệu\" name=\"txtTimeUpload\" value=\""+ String(timeUpload) +"\" required></div>\
 */
 String webView(){
@@ -1030,15 +1056,15 @@ String webView(){
 String webViewMain(){
   String content = "<body>\
     <div class=\"head1\">\
-    <h1>" + selectedInventer + "</h1>\
+    <h1>" + (selectedInventer == "" ? "Home": selectedInventer) + "</h1>\
     </div>\
     <div class=\"content\">\
     <form action=\"\" method=\"get\">\
       <table>\
       <tr class=\"row\"><th>Label</th><th>Value</th></tr>"+ SendTRViewHomeMain() +"\
       </table>\
-      <div class=\"left\">Response upload</div>\
-      <div class=\"right\">: " + responseUpload + "</div>\
+      <div class=\"row-block\"><div class=\"left\">Response upload</div>\
+      <div class=\"right\">: " + responseUpload + "</div></div>\
     </form>\
     <script type=\"text/javascript\">\
       setInterval(function() {\
@@ -1058,30 +1084,36 @@ String RegisterMaps(){
     </div>\
     <div class=\"content\">\
       <table><tr class=\"row\"><th>Address</th><th>Hex Address</th><th>data</th></tr>"+ SendTRRegisterMaps() +"</table>\
+      <table><br>\
+      <tr class=\"row\"><th>Value</th><th>Convert to Float</th></tr>"+ SendTRViewHome() +"\
+      </table>\
     </div>\
     <script type=\"text/javascript\">\
       setInterval(function() {\
       window.location.reload();\
-      }, " + String(timeStation / 2) + ");\
+      }, " + String(timeUpload / 1.5) + ");\
     </script>\
   </body>\
   </html>";
   return content;
 }
 String formAddressAndLabelConfig(){
-  String content = "<div class=\"subtitle\">Config Label and Address for RS485</div><br>\
+  String content = "";
+  if (!modeTest) {
+    content = "<div class=\"subtitle\">Config Label and Address for RS485</div><br>\
     <table class=\"small-table\"><tr class=\"row\"><th>Label Name</th><th>Address (HEX)</th></tr>"+ SendTRAddressLabel() +"</table>\
-    <div class=\"left\">Label Name</div>\
-    <div class=\"right\">: <input class=\"input\" placeholder=\"Tên nhãn\" name=\"txtLabelConfig\" value=\"\"></div>\
-    <div class=\"left\">Address (HEX)</div>\
-    <div class=\"right\">: <input class=\"input\" placeholder=\"Địa chỉ (hex)\" name=\"txtAddressConfig\" value=\"\"></div>\
-    <div class=\"left\"></div>\
+    <div class=\"row-block\"><div class=\"left\">Label Name</div>\
+    <div class=\"right\">: <input class=\"input\" placeholder=\"Tên nhãn\" name=\"txtLabelConfig\" value=\"\"></div></div>\
+    <div class=\"row-block\"><div class=\"left\">Address (HEX)</div>\
+    <div class=\"right\">: <input class=\"input\" placeholder=\"Địa chỉ (hex)\" name=\"txtAddressConfig\" value=\"\"></div></div>\
+    <div class=\"row-block\"><div class=\"left\"></div>\
     <div class=\"right\">\
      <div class=\"listBtn align-left\">\
        <button type=\"submit\" name=\"btnAddLabelAddress\" value=\"true\">Add</button>\
        <button type=\"submit\" name=\"btnRemoveLabelAddres\" value=\"true\">Remove</button>\
       </div>\
-    </div>";
+    </div></div>";
+  }
   return content;
 }
 
@@ -1107,9 +1139,14 @@ String SendTRRegisterMaps()
 String SendTRViewHome()
 {
   String s="";
-  float value = Convert4ByteToFloat(bufferRS[3], bufferRS[4],bufferRS[5],bufferRS[6]);
-  String str = String(bufferRS[3], HEX) + " " + String(bufferRS[4], HEX) + " " + String(bufferRS[5], HEX) + " " + String(bufferRS[6], HEX);
-  s += "<tr class=\"row\"><td class=\"column\">"+ str + "</td><td class=\"column\">"+ String(value) +"</td></tr>";
+  int start = 3;
+  while ((start + 3) <= (lenRX485 - 2)) {
+
+    float value = Convert4ByteToFloat(bufferRS[start], bufferRS[start+1],bufferRS[start+2],bufferRS[start+3]);
+    String str = String(bufferRS[start], HEX) + " " + String(bufferRS[start+1], HEX) + " " + String(bufferRS[start+2], HEX) + " " + String(bufferRS[start+3], HEX);
+    s += "<tr class=\"row\"><td class=\"column\">"+ str + "</td><td class=\"column\">"+ String(value) +"</td></tr>";
+    start += 4;
+  }
   return s;
 }
 String SendTRViewHomeMain()
@@ -1182,14 +1219,35 @@ void AddAndRemoveLabelAddress(String action, String label, int address) {
     }
   }
 }
-boolean isCheckLabelAddressConfig(String label, int address) {
+int getIndexLabelAddressConfig(String label, int address, String check) {
+  int i = -1;
+  while (++i < totalCount) {
+    if (check =="Both" && ListLabel[i] == label && ListAddress[i] == address) {
+      return i;
+    }
+    else if (check =="Label" && ListLabel[i] == label) {
+      return i;
+    }
+    else if (check =="Address" && ListAddress[i] == address) {
+      return i;
+    }
+  }
+  return -1;
+}
+int isCheckLabelAddressConfig(String label, int address) {
   int i = -1;
   while (++i < totalCount) {
     if (ListLabel[i] == label && ListAddress[i] == address) {
-      return true;
+      return 0;
+    }
+    if (ListLabel[i] == label) {
+      return 1;
+    }
+    if (ListAddress[i] == address) {
+      return 2;
     }
   }
-  return false;
+  return -1;
 }
 void GiaTriThamSo()
 {
@@ -1324,23 +1382,44 @@ void GiaTriThamSo()
         }
       }
       else if (Name.indexOf("btnAddLabelAddress") >= 0){
-        if (labelConfig != "" && addressConfig != "" && !isCheckLabelAddressConfig(labelConfig, StringHexToInt(addressConfig))) {
-          AddAndRemoveLabelAddress("Add", labelConfig, StringHexToInt(addressConfig));
-          show("Add config:");
-          show("Label:" + labelConfig);
-          show("Address:" + addressConfig);
-          WriteConfig();
-          show("Save config");
+        if (labelConfig != "" && addressConfig != "") {
+          int isCheck = isCheckLabelAddressConfig(labelConfig, StringHexToInt(addressConfig));
+          if (isCheck == 0) {
+            show("Label (Address) exist!");
+          } else {
+            if (isCheck == -1) {
+              AddAndRemoveLabelAddress("Add", labelConfig, StringHexToInt(addressConfig));
+              show("Add config:");
+            } else if (isCheck == 1) {
+              int indexLabel = getIndexLabelAddressConfig(labelConfig, StringHexToInt(addressConfig), "Label");
+              ListAddress[indexLabel] = StringHexToInt(addressConfig);
+              show("Update Address:");
+            } else if (isCheck == 2) {
+              int indexAddress = getIndexLabelAddressConfig(labelConfig, StringHexToInt(addressConfig), "Address");
+              ListLabel[indexAddress] = labelConfig;
+              show("Update Label:");
+            }
+            show("Label:" + labelConfig + ", Address:" + addressConfig);
+            WriteConfig();
+            show("Save config");
+          }
+          
         }
       }
       else if (Name.indexOf("btnRemoveLabelAddres") >= 0){
-        if (labelConfig != "" && addressConfig != "" && isCheckLabelAddressConfig(labelConfig, StringHexToInt(addressConfig))) {
-          AddAndRemoveLabelAddress("Remove", labelConfig, StringHexToInt(addressConfig));
-          show("Remove config:");
-          show("Label:" + labelConfig);
-          show("Address:" + addressConfig);
-          WriteConfig();
-          show("Save config");
+        if (labelConfig != "" && addressConfig != "") {
+          int isCheck = isCheckLabelAddressConfig(labelConfig, StringHexToInt(addressConfig));
+          if (isCheck == 0) {
+            AddAndRemoveLabelAddress("Remove", labelConfig, StringHexToInt(addressConfig));
+            show("Remove config:");
+            show("Label:" + labelConfig);
+            show("Address:" + addressConfig);
+            WriteConfig();
+            show("Save config");
+          }
+          else {
+            show("No remove config Because Label (Address) not exist!");
+          }
         }
       }
       else if (Name.indexOf("txtRestart") >= 0){
