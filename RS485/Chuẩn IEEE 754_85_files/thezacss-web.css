@@ -1,0 +1,134 @@
+body{width:53%;font-size:90%;}
+html,body{cursor:url("http://theza2.mobie.in/images/chuot-but-chi.png"),url("http://theza2.mobie.in/images/chuot-but-chi.png"),auto;}
+a:hover, a:focus{cursor:url("/images/chuot-hover.cur"), progress;}
+.bang-top{background:url('/images/bang-top.png') no-repeat;background-size:100%;}
+.bang-bottom{background:url('/images/bang-bottom.png') no-repeat;background-size:100%;}
+.bang-dear{background:url('/images/bang-dear.png') repeat;background-size:100%;}
+.fanpage{background:url(/images/khung-tuong-5.png) no-repeat;background-size:100% 100%;}
+.tree{background:url('/images/tao-cay.jpg') no-repeat;background-size:100% 100%;}
+a.tao{background-image:url('/images/taoden-90-61.png');background-repeat:no-repeat;background-size:100% 100%;cursor:, progress !important;background-position:top right;display:inline-block;font-family:'Comic Sans MS', Helvetica, Calibri, Arial, sans-serif;color:#fff;text-decoration:none;font-weight:bold;font-size:90%;font-color:#FFF;}
+/*white-space:pre-wrap;normal|nowrap|pre|pre-line|pre-wrap|initial|inherit;*/
+a.tao:hover{background-image:url('/images/taodo-90-61.png');background-repeat:no-repeat;background-size:100% 100%;}
+.khung-go{padding:3% 3% 2% 3%;background: url(/images/khung-go.jpg) no-repeat;background-size: 100% 100%;}
+#search:-webkit-input-placeholder{color:#9c9c9c;font-style:italic;}
+#search:-moz-placeholder{color:#9c9c9c;font-style:italic;}
+#search.placeholder{color:#9c9c9c !important;font-style:italic;}
+#search:focus{border-color:#8badb4;background:#fff;outline:none;}
+
+
+/*Menu-nhanh*/
+.noi-dung-web {
+  margin-top: 20px;
+ /* height: 1500px;  Used in this example to enable scrolling */
+}
+/*== Reset CSS ==*/
+/*ul {
+  margin-top: 0.5em;
+  padding: 0;
+  box-sizing:border-box;
+}*/
+
+#menu-img-st,#menu-img-hm {width:20px;}
+
+#menu-img-st:hover {
+    content: url('/images/setting2.png');
+}
+
+#menu-img-hm:hover {
+    content: url('/images/home2.png');
+}
+
+.menu-big {font-size:120%;}
+
+.menu1 :after {
+  content: " ▼";
+  color:#BDBDBD;
+  font-size: 75%;}
+
+.menu2 :after {
+  content: " ➤";
+  color:#BDBDBD;
+  font-size: 80%;
+  float:right;
+}
+
+
+#menu-nhanh
+{   
+    position: fixed; /* Set the navbar to fixed position */
+    top: -10px; /* Position the navbar at the top of the page */
+    width: 53%; /* Full width */
+	background-color:#2D2D2D;
+	margin:0px 0px;
+    z-index:9998;
+    font-family: "Times New Roman", arial;
+}
+#menu-nhanh ul
+{   margin-top: 0.5em;padding: 0;
+	list-style:none;
+}
+#menu-nhanh ul li
+{   
+	float:left;	/*display: inline-block;*/
+    background-color:#2D2D2D;
+	border-right:1px ridge #E6E6E6;
+	position:relative;
+    
+}
+    /*style:none|hidden|dotted|dashed|solid|double|groove|ridge|inset|outset|initial|inherit;*/
+
+#menu-nhanh ul li:last-child
+{   
+	border:none;
+}
+#menu-nhanh ul li a
+{   
+    font-weight:bold;
+    color: #A4A4A4;
+	text-decoration:none;
+	padding:5px 5px;
+	display:block;
+	white-space:pre;
+}
+#menu-nhanh ul li a:hover
+{
+	color:#FFFFFF;
+	background-color:#2D2D2D;
+	/*border-top:2px blue double;
+	transition:all 1s 0s linear;*/
+}
+/* cap 2 */
+#menu-nhanh ul ul li
+{   
+	float:none;
+	border-right:none;
+	border-bottom:1px ridge #E6E6E6;
+    width: 120%;
+    font-size:90%;
+}
+#menu-nhanh ul ul
+{   margin-top: 0;padding: 0;
+	background-color:#2D2D2D;
+	position:absolute;
+	top:100%;
+	left:0;
+	z-index:9999;
+	display:none;
+}
+#menu-nhanh ul li:hover > ul
+{
+	display:block;
+}
+/* cap 3 */
+
+#menu-nhanh ul ul ul
+{
+	left:100%;
+	top:0;
+}
+
+#menu-nhanh ul ul ul li a:before  { content: " ● ";}
+
+
+#menu-nhanh-dt
+{display:none; }
