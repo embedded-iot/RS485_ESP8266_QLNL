@@ -628,12 +628,30 @@ signed int CRC16(byte arrayData[] ,int iLeng)
   }
   return(CRCHi<<8 | CRCLo);
 }
+// https://en.wikipedia.org/wiki/Single-precision_floating-point_format
+// The IEEE 754 standard specifies a binary32 as having:
+// Sign bit: 1 bit
+// Exponent width: 8 bits
+// Significand precision: 24 bits (23 explicitly stored)
 float Convert4ByteToFloat(byte HH, byte HL, byte LH, byte LL) {
   unsigned long bits = (HH << 24) | (HL << 16) | (LH << 8) | LL;
   int sign = ((bits >> 31) == 0) ? 1.0 : -1.0;
   long e = ((bits >> 23) & 0xff);
   long m = (e == 0) ? (bits & 0x7fffff) << 1 : (bits & 0x7fffff) | 0x800000;
-  float f = sign * m * pow(2, e - 150);
+  float f = sign * m * pow(2, e - 127 - 23);
+  return f;
+}
+// https://en.wikipedia.org/wiki/Half-precision_floating-point_format
+// The IEEE 754 standard specifies a binary16 as having the following format:
+// Sign bit: 1 bit
+// Exponent width: 5 bits
+// Significand precision: 11 bits (10 explicitly stored)
+float Convert2ByteToFloat(byte HH, byte HL) {
+  unsigned long bits = (HH << 8) | HL;
+  int sign = ((bits >> 15) == 0) ? 1.0 : -1.0;
+  long e = ((bits >> 10) & 0x1f);
+  long m = (e == 0) ? (bits & 0x3ff) << 1 : (bits & 0x3ff) | 0x400;
+  float f = sign * m * pow(2, e - 15 - 10);
   return f;
 }
 void ConfigDefault()
