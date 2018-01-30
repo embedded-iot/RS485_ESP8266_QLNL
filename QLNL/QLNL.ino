@@ -49,8 +49,9 @@ ESP8266WebServer server(80);
 #define ADDR_URL_UPLOAD (ADDR_SELECTED_INVENTER+20)
 
 #define ADDR_ARRAY_LABEL (ADDR_URL_UPLOAD + 50)
-#define ADDR_ARRAY_ADDRESS (ADDR_ARRAY_LABEL + 20)
+#define ADDR_ARRAY_ADDRESS (ADDR_ARRAY_LABEL + 50)
 
+#define ADDR_DATA_TYPE (ADDR_ARRAY_ADDRESS + 20)
 
 #define ID_DEFAULT "1234567890"
 
@@ -71,6 +72,7 @@ ESP8266WebServer server(80);
 #define DATA_SIZE_DEFAULT 8
 #define PARITY_DEFAULT "None"
 #define STOP_BITS_DEFAULT 1
+#define DATA_TYPE_DEFAULT 32
 
 #define START_ADDRESS_DEFAULT 0x4B
 #define TOTAL_REGISTER_DEFAULT 0x10
@@ -110,6 +112,10 @@ int countInventers = 1;
 String modelsInventer[] = {VIPS60};
 String selectedInventer ; 
 
+
+int countDataTypes = 2;
+int DataTypes[4] = {16, 32};
+int selectedDataType ;
 
 
 unsigned char I1[8],I2[8],I3[8],U1[8],U2[8],U3[8],P1[8],P2[8],P3[8],totalenergy[11];
@@ -215,6 +221,7 @@ int timeSendRS485 = 2000;
 int indexAddress = -1;
 String dataUploadToServer = "";
 String responseUpload;
+bool responseRS485 = false;
 
 void loop()
 {
@@ -243,6 +250,7 @@ void loop()
       }
     } else {
       responseUpload = "False";
+      responseRS485 = false;
     }
     timeUp = millis();
   }
@@ -254,6 +262,7 @@ void loop()
         blinkLed(1,500); 
         show("Reponse RX Error!");
         show("blink 2");
+        responseRS485 = false;
       }
       requestDataInventer(ListAddress[indexAddress], 2);
       sendRequestToRS485();
@@ -270,6 +279,7 @@ void loop()
       blinkLed(1,500);
       show("blink 1");
       show("Reponse RX Error!");
+      responseRS485 = false;
     }
     sendRequestToRS485();
     flagReponse = true;
@@ -288,14 +298,22 @@ void loop()
             show(String(bufferRS[i], HEX));
           }
          } else {
-           float value = Convert4ByteToFloat(bufferRS[3], bufferRS[4],bufferRS[5],bufferRS[6]);
+           float value = 0;
+           if (selectedDataType == 16) {
+              value = Convert2ByteToFloat(bufferRS[3], bufferRS[4]);
+           } else if (selectedDataType == 32) {
+              value = Convert4ByteToFloat(bufferRS[3], bufferRS[4],bufferRS[5],bufferRS[6]);
+           } else {
+             value = Convert4ByteToFloat(bufferRS[3], bufferRS[4],bufferRS[5],bufferRS[6]);
+           }
+
            ListValue[indexAddress] = value;
            ConvertUnit(indexAddress);
            show(ListLabel[indexAddress]);
            show(String(ListValue[indexAddress]));
          }
         flagReponse = false;
-
+        responseRS485 = true;
        }
        //flagReponse = false;
     }else  {
@@ -676,6 +694,7 @@ void ConfigDefault()
   startAddress = START_ADDRESS_DEFAULT;
   totalRegister = TOTAL_REGISTER_DEFAULT;
 
+  selectedDataType = DATA_TYPE_DEFAULT;
   int i = -1;
   while (++i < maxLength) {
     ListLabel[i] = "";
@@ -704,7 +723,7 @@ void WriteConfig()
   SaveStringToEEPROM(String(selectedDataSize), ADDR_DATA_SIZE);
   SaveStringToEEPROM(selectedParity, ADDR_PARITY);
   SaveStringToEEPROM(String(selectedStopBits), ADDR_STOP_BITS);
-
+  SaveStringToEEPROM(String(selectedDataType), ADDR_DATA_TYPE);
 
   SaveStringToEEPROM(String(startAddress), ADDR_START_ADDRESS);
   SaveStringToEEPROM(String(totalRegister), ADDR_TOTAL_REGISTER);
@@ -732,6 +751,7 @@ void ReadConfig()
   selectedDataSize = atoi(ReadStringFromEEPROM(ADDR_DATA_SIZE).c_str());;
   selectedParity = ReadStringFromEEPROM(ADDR_PARITY);
   selectedStopBits = atoi(ReadStringFromEEPROM(ADDR_STOP_BITS).c_str());;
+  selectedDataType = atoi(ReadStringFromEEPROM(ADDR_DATA_TYPE).c_str());;
 
   startAddress = atoi(ReadStringFromEEPROM(ADDR_START_ADDRESS).c_str());;
   totalRegister = atoi(ReadStringFromEEPROM(ADDR_TOTAL_REGISTER).c_str());;
@@ -755,6 +775,7 @@ void ReadConfig()
   show(String(selectedDataSize));
   show(selectedParity);
   show(String(selectedStopBits));
+  show(String(selectedDataType));
   show(String(startAddress,HEX));
   show(String(totalRegister,HEX));
   show("Array Label and Address:");
@@ -1006,6 +1027,8 @@ String ContentConfig(){
         <div class=\"right\">: " + dropdownParities() + "</div></div>\
         <div class=\"row-block\"><div class=\"left\">Stop Bits</div>\
         <div class=\"right\">: " + dropdownStopBits() + "</div></div>\
+        <div class=\"row-block\"><div class=\"left\">IEEE754 Data Type (Bit)</div>\
+        <div class=\"right\">: " + dropdownDataTypes() + "</div></div>\
         " + strSetStartAdressAndTotalRegister() + "\
         <br>" + formAddressAndLabelConfig() + "\
         <hr>\
@@ -1072,6 +1095,7 @@ String webView(){
   return content;
 }
 String webViewMain(){
+  String strResponseRS485 = responseRS485 == true ? "True" : "False";
   String content = "<body>\
     <div class=\"head1\">\
     <h1>" + (selectedInventer == "" ? "Home": selectedInventer) + "</h1>\
@@ -1081,13 +1105,15 @@ String webViewMain(){
       <table>\
       <tr class=\"row\"><th>Label</th><th>Value</th></tr>"+ SendTRViewHomeMain() +"\
       </table>\
+      <div class=\"row-block\"><div class=\"left\">Response RS485</div>\
+      <div class=\"right\">: " + strResponseRS485 + "</div></div>\
       <div class=\"row-block\"><div class=\"left\">Response upload</div>\
       <div class=\"right\">: " + responseUpload + "</div></div>\
     </form>\
     <script type=\"text/javascript\">\
       setInterval(function() {\
       window.location.reload();\
-      }, " + String(timeSendRS485 * totalCount / 2) + ");\
+      }, 4000);\
     </script>\
     </div>\
   </body>\
@@ -1096,11 +1122,14 @@ String webViewMain(){
 }
 String RegisterMaps(){
   GiaTriThamSo();
+  if (responseRS485 == false) lenRX485 = 0; 
+  String strResponseRS485 = responseRS485 == true ? "True" : "False";
   String content = "<body>\
     <div class=\"head1\">\
     <h1>Register Maps</h1>\
     </div>\
     <div class=\"content\">\
+      <div class=\"subtitle\">Response RS485:" + strResponseRS485 + "</div>\
       <table><tr class=\"row\"><th>Address</th><th>Hex Address</th><th>data</th></tr>"+ SendTRRegisterMaps() +"</table>\
       <table><br>\
       <tr class=\"row\"><th>Value</th><th>Convert to Float</th></tr>"+ SendTRViewHome() +"\
@@ -1109,7 +1138,7 @@ String RegisterMaps(){
     <script type=\"text/javascript\">\
       setInterval(function() {\
       window.location.reload();\
-      }, " + String(timeUpload / 1.5) + ");\
+      }, 4000);\
     </script>\
   </body>\
   </html>";
@@ -1159,17 +1188,30 @@ String SendTRViewHome()
   String s="";
   int start = 3;
   while ((start + 3) <= (lenRX485 - 2)) {
-
-    float value = Convert4ByteToFloat(bufferRS[start], bufferRS[start+1],bufferRS[start+2],bufferRS[start+3]);
-    String str = String(bufferRS[start], HEX) + " " + String(bufferRS[start+1], HEX) + " " + String(bufferRS[start+2], HEX) + " " + String(bufferRS[start+3], HEX);
-    s += "<tr class=\"row\"><td class=\"column\">"+ str + "</td><td class=\"column\">"+ String(value) +"</td></tr>";
-    start += 4;
+    if (selectedDataType == 16) {
+      float value = Convert2ByteToFloat(bufferRS[start], bufferRS[start+1]);
+      String str = String(bufferRS[start], HEX) + " " + String(bufferRS[start+1], HEX);
+      s += "<tr class=\"row\"><td class=\"column\">"+ str + "</td><td class=\"column\">"+ String(value) +"</td></tr>";
+      start += 2;
+    } else if (selectedDataType == 32) {
+      float value = Convert4ByteToFloat(bufferRS[start], bufferRS[start+1],bufferRS[start+2],bufferRS[start+3]);
+      String str = String(bufferRS[start], HEX) + " " + String(bufferRS[start+1], HEX) + " " + String(bufferRS[start+2], HEX) + " " + String(bufferRS[start+3], HEX);
+      s += "<tr class=\"row\"><td class=\"column\">"+ str + "</td><td class=\"column\">"+ String(value) +"</td></tr>";
+      start += 4;
+    } else {
+      float value = Convert4ByteToFloat(bufferRS[start], bufferRS[start+1],bufferRS[start+2],bufferRS[start+3]);
+      String str = String(bufferRS[start], HEX) + " " + String(bufferRS[start+1], HEX) + " " + String(bufferRS[start+2], HEX) + " " + String(bufferRS[start+3], HEX);
+      s += "<tr class=\"row\"><td class=\"column\">"+ str + "</td><td class=\"column\">"+ String(value) +"</td></tr>";
+      start += 4;
+    }
   }
   return s;
 }
 String SendTRViewHomeMain()
 {
   String s="";
+  if (responseRS485 == false) 
+    return s;
   for (int i = 0; i< totalCount; i++) { 
     s += "<tr class=\"row\"><td class=\"column\">"+ ListLabel[i] + "</td><td class=\"column\">"+ String(ListValue[i]) +"</td></tr>";
   }
@@ -1216,6 +1258,15 @@ String dropdownStopBits() {
   s += "<select class=\"input\" name=\"txtSelectedStopBits\">";
   for (int i = 0; i< 2; i++) {
     s += "<option value=\"" + String(StopBits[i]) + "\" " + ((selectedStopBits == StopBits[i]) ? "selected": "") + ">" + (String(StopBits[i])) + "</option>";
+  }
+  s += "</select>";
+  return s;
+}
+String dropdownDataTypes() {
+  String s ="";
+  s += "<select class=\"input\" name=\"txtSelectedDataType\">";
+  for (int i = 0; i< countDataTypes; i++) {
+    s += "<option value=\"" + String(DataTypes[i]) + "\" " + ((selectedDataType == DataTypes[i]) ? "selected": "") + ">" + (String(DataTypes[i])) + "</option>";
   }
   s += "</select>";
   return s;
@@ -1371,6 +1422,12 @@ void GiaTriThamSo()
         if (Value != String(selectedStopBits)){
           selectedStopBits =  atoi(Value.c_str());
           show("Set selectedStopBits : " + String(selectedStopBits));
+        }
+      }
+      else if (Name.indexOf("txtSelectedDataType") >= 0){
+        if (Value != String(selectedDataType)){
+          selectedDataType =  atoi(Value.c_str());
+          show("Set selectedDataType : " + String(selectedDataType));
         }
       }
       else if (Name.indexOf("txtStartAddress") >= 0){
